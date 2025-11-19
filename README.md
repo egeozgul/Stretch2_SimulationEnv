@@ -1,5 +1,18 @@
 # Stretch2_SimulationEnv
 
+# Instructions
+
+conda env create -f environment.yml          //use this when creating the env for the first time
+
+conda env update -f environment.yml --prune  //use this when pulling updated env from github
+
+conda activate simenv
+
+Python3 test.py
+
+
+
+
 # Goal
 Create a simluation environment , and simulate a Stretch 2 robot in the environment.
 
