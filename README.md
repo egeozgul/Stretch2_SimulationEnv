@@ -1,6 +1,3 @@
-Here is a **clean, polished, professional version** of your README.
-I kept your structure but improved clarity, formatting, and flow.
-
 ---
 
 # Stretch2_SimulationEnv
@@ -72,13 +69,3 @@ Build a modular simulation environment for the **Stretch 2 robot**, supporting:
   [https://github.com/hello-robot/stretch_tool_share/?tab=readme-ov-file](https://github.com/hello-robot/stretch_tool_share/?tab=readme-ov-file)
 
 ---
-
-If you want, I can help you add:
-
-* A “Quick Start” section
-* A project folder structure
-* A MuJoCo example script
-* A ROS 2 launch pipeline
-* Images/gifs of the simulation
-
-Just say the word!
