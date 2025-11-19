@@ -1,36 +1,84 @@
+Here is a **clean, polished, professional version** of your README.
+I kept your structure but improved clarity, formatting, and flow.
+
+---
+
 # Stretch2_SimulationEnv
 
-# Instructions
+A lightweight simulation environment for the **Hello Robot Stretch 2** platform.
+This project uses **MuJoCo**, **Python**, and optionally **ROS 2** to simulate robot motion, interactions, and custom environments.
 
-conda env create -f environment.yml          //use this when creating the env for the first time
+---
 
-conda env update -f environment.yml --prune  //use this when pulling updated env from github
+## 🔧 Setup Instructions
 
+### **Create the environment (first time)**
+
+```bash
+conda env create -f environment.yml
+```
+
+### **Update the environment (after pulling updates from GitHub)**
+
+```bash
+conda env update -f environment.yml --prune
+```
+
+### **Activate the environment**
+
+```bash
 conda activate simenv
+```
 
-Python3 test.py
+### **Run a test script**
 
+```bash
+python3 test.py
+```
 
+---
 
+## 🎯 Goal
 
-# Goal
-Create a simluation environment , and simulate a Stretch 2 robot in the environment.
+Build a modular simulation environment for the **Stretch 2 robot**, supporting:
 
-# TODO
-Create conda yaml file for dependencies
+* Custom MuJoCo-based environments
+* Robot joint and wheel actuation
+* Interactive scenes with tables, objects, and ingredients
+* (Optional) ROS 2 control and visualization
 
-Use Pybullet or something similar.
+---
 
-Lets try to use Ros2 if possible
+## 📝 TODO
 
-We need to get the wheeles rotating , and all other actuators moving.
+* [ ] Finalize Conda environment file with all dependencies
+* [ ] Evaluate alternative simulators (e.g., PyBullet)
+* [ ] Add ROS 2 integration (Jazzy/Humble)
+* [ ] Implement wheel and actuator motion
+* [ ] Add environment objects (tables, containers, ingredients)
+* [ ] Create demo scripts and visualization tools
 
-if we have time, we can put tables and ingredients in the simulation.
+---
 
+## 🔗 Useful Stretch 2 Resources
 
-# Some Stretch 2 links:
-https://docs.hello-robot.com/0.2/stretch-ros2/stretch_description/
+* Stretch 2 ROS 2 Description
+  [https://docs.hello-robot.com/0.2/stretch-ros2/stretch_description/](https://docs.hello-robot.com/0.2/stretch-ros2/stretch_description/)
 
-https://github.com/hello-robot/stretch_tool_share/tree/master/tool_share/stretch_2_STEP
+* Stretch 2 STEP/URDF Files
+  [https://github.com/hello-robot/stretch_tool_share/tree/master/tool_share/stretch_2_STEP](https://github.com/hello-robot/stretch_tool_share/tree/master/tool_share/stretch_2_STEP)
 
-https://github.com/hello-robot/stretch_tool_share/?tab=readme-ov-file
+* Stretch Tool Share Repository
+  [https://github.com/hello-robot/stretch_tool_share/?tab=readme-ov-file](https://github.com/hello-robot/stretch_tool_share/?tab=readme-ov-file)
+
+---
+
+If you want, I can help you add:
+
+* A “Quick Start” section
+* A project folder structure
+* A MuJoCo example script
+* A ROS 2 launch pipeline
+* Images/gifs of the simulation
+
+Just say the word!
