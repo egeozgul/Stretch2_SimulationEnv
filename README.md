@@ -1,11 +1,8 @@
----
-
 # Stretch2_SimulationEnv
 
 A lightweight simulation environment for the **Hello Robot Stretch 2** platform.
 This project uses **MuJoCo**, **Python**, and optionally **ROS 2** to simulate robot motion, interactions, and custom environments.
 
----
 
 ## 🔧 Setup Instructions
 
