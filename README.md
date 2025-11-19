@@ -7,7 +7,7 @@ This project uses **MuJoCo**, **Python**, and optionally **ROS 2** to simulate r
 
 ## 🔧 Setup Instructions
 
-### **Create the environment (first time)**
+**Create the environment (first time)**
 
 ```bash
 conda env create -f environment.yml
