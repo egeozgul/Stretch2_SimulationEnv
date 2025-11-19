@@ -13,19 +13,19 @@ This project uses **MuJoCo**, **Python**, and optionally **ROS 2** to simulate r
 conda env create -f environment.yml
 ```
 
-### **Update the environment (after pulling updates from GitHub)**
+**Update the environment (after pulling updates from GitHub)**
 
 ```bash
 conda env update -f environment.yml --prune
 ```
 
-### **Activate the environment**
+**Activate the environment**
 
 ```bash
 conda activate simenv
 ```
 
-### **Run a test script**
+**Run a test script**
 
 ```bash
 python3 test.py
