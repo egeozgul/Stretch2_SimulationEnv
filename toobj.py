@@ -1,18 +1,21 @@
 import trimesh
 import os
 
-# Define your meshes
-meshes = {
-    'tomato': '/home/guru-vignesh/Downloads/tomato/scene.gltf',
-    #'onion': '/home/guru-vignesh/Downloads/onion/scene.gltf',
-    #'cabbage': '/home/guru-vignesh/Documents/cabbage/scene.gltf',
-    #'table': '/home/guru-vignesh/Downloads/dining_table/scene.gltf',
-   # 'plate': '/home/guru-vignesh/Documents/plate/scene.gltf',
-   #'bell': '/home/guru-vignesh/Documents/red_bell_pepper/scene.gltf',
-}
-
-output_dir = '/home/guru-vignesh/iiit/meshes/'
+# Get the directory where this script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+output_dir = os.path.join(script_dir, 'meshes')
 os.makedirs(output_dir, exist_ok=True)
+
+# Define your meshes - Update these paths to point to your GLTF files
+# Example: Use absolute paths or relative paths from the script directory
+meshes = {
+    # 'tomato': os.path.join(script_dir, 'path', 'to', 'tomato', 'scene.gltf'),
+    # 'onion': os.path.join(script_dir, 'path', 'to', 'onion', 'scene.gltf'),
+    # 'cabbage': os.path.join(script_dir, 'path', 'to', 'cabbage', 'scene.gltf'),
+    # 'table': os.path.join(script_dir, 'path', 'to', 'dining_table', 'scene.gltf'),
+    # 'plate': os.path.join(script_dir, 'path', 'to', 'plate', 'scene.gltf'),
+    # 'bell': os.path.join(script_dir, 'path', 'to', 'red_bell_pepper', 'scene.gltf'),
+}
 
 for name, gltf_path in meshes.items():
     if os.path.exists(gltf_path):

@@ -1,8 +1,14 @@
 import trimesh
 import numpy as np
+import os
+
+# Get the directory where this script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+input_path = os.path.join(script_dir, 'meshes', 'table.obj')
+output_path = os.path.join(script_dir, 'meshes', 'table_fixed.obj')
 
 # Load mesh
-mesh = trimesh.load('/home/guru-vignesh/iiit/meshes/table.obj')
+mesh = trimesh.load(input_path)
 
 print("BEFORE FIX:")
 print(f"  Dimensions: {mesh.extents}")
@@ -29,5 +35,5 @@ print(f"  Bounds: {mesh.bounds}")
 print(f"  Table height: {mesh.extents[2]:.3f}m")
 
 # Save fixed mesh
-mesh.export('/home/guru-vignesh/iiit/meshes/table_fixed.obj')
-print(f"\n✓ Saved to table_fixed.obj")
+mesh.export(output_path)
+print(f"\n✓ Saved to {output_path}")

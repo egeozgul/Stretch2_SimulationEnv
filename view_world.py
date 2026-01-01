@@ -1,6 +1,11 @@
 import mujoco
 import mujoco.viewer
-model = mujoco.MjModel.from_xml_path('/home/guru-vignesh/iiit/table_world.xml')
+import os
+
+# Get the directory where this script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+xml_path = os.path.join(script_dir, 'table_world.xml')
+model = mujoco.MjModel.from_xml_path(xml_path)
 
 data = mujoco.MjData(model)
 base_link_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, 'base_link')

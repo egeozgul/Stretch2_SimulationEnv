@@ -1,5 +1,5 @@
 <mujoco model="throwing_environment">
-  <compiler angle="radian" autolimits="true"/>
+  <compiler angle="radian" assetdir="." autolimits="true"/>
   
   <option timestep="0.002" gravity="0 0 -9.81" integrator="RK4"/>
   
@@ -10,18 +10,18 @@
   </visual>
   
   <asset>
-    <mesh name="tomato" file="/home/guru-vignesh/iiit/meshes/tomato.obj" scale="0.06 0.06 0.06"/>
-    <texture name="tomato_tex" type="2d" file="/home/guru-vignesh/Documents/tomato/textures/material0_baseColor.png"/>
+    <mesh name="tomato" file="../meshes/tomato.obj" scale="0.06 0.06 0.06"/>
+    <texture name="tomato_tex" type="2d" file="../textures/material0_baseColor.png"/>
     <material name="tomato_mat" texture="tomato_tex"/>
-    <mesh name="onion" file="/home/guru-vignesh/iiit/meshes/onion.obj" scale="0.013 0.013 0.013"/>
-    <texture name="onion_tex" type="2d" file="/home/guru-vignesh/Documents/red_onion/textures/Red_onion_diffuse.png"/>
+    <mesh name="onion" file="../meshes/onion.obj" scale="0.013 0.013 0.013"/>
+    <texture name="onion_tex" type="2d" file="../textures/Red_onion_diffuse.png"/>
     <material name="onion_mat" texture="onion_tex"/>
-    <mesh name="plate" file="/home/guru-vignesh/iiit/meshes/plate.obj"/>
-    <mesh name="bell" file="/home/guru-vignesh/iiit/meshes/bell.obj" />
-    <texture name="bell_tex" type="2d" file="/home/guru-vignesh/Documents/red_bell_pepper/textures/Material.001_baseColor.png"/>
+    <mesh name="plate" file="../meshes/plate.obj"/>
+    <mesh name="bell" file="../meshes/bell.obj" />
+    <texture name="bell_tex" type="2d" file="../textures/Material.001_baseColor.png"/>
     <material name="bell_mat" texture="bell_tex"/>
-    <mesh name="table" file="/home/guru-vignesh/iiit/meshes/table_fixed.obj" scale="1 1 0.9"/>
-    <texture name="table_tex" type="2d" file="/home/guru-vignesh/Documents/dining_table/textures/Material.001_baseColor.png"/>
+    <mesh name="table" file="../meshes/table_fixed.obj" scale="1 1 0.9"/>
+    <texture name="table_tex" type="2d" file="../textures/Material.001_baseColor.png"/>
     <material name="table_mat" texture="table_tex"/>
     
 <!-- Change this in your <asset> section -->

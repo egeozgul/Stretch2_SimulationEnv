@@ -4,8 +4,13 @@ import numpy as np
 from pynput import keyboard
 from time import sleep
 import click
+import os
 
-model = mujoco.MjModel.from_xml_path('/home/guru-vignesh/iiit/table_world.xml')
+# Get the directory where this script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+xml_path = os.path.join(script_dir, 'table_world.xml')
+
+model = mujoco.MjModel.from_xml_path(xml_path)
 data = mujoco.MjData(model)
 
 

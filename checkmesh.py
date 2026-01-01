@@ -1,8 +1,13 @@
 import trimesh
 import numpy as np
+import os
+
+# Get the directory where this script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+mesh_path = os.path.join(script_dir, 'meshes', 'table_fixed.obj')
 
 # Load the table mesh
-mesh = trimesh.load('/home/guru-vignesh/iiit/meshes/table_fixed.obj')
+mesh = trimesh.load(mesh_path)
 volume = mesh.volume
 print(f"Mesh volume: {volume} m³")
 mass = 0.15  # 150 grams

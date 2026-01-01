@@ -7,29 +7,90 @@ This project uses **MuJoCo**, **Python**, and optionally **ROS 2** to simulate r
 
 ## 🔧 Setup Instructions
 
-**Create the environment (first time)**
+### Prerequisites
+
+- Conda (Miniconda or Anaconda)
+- Python 3.11
+
+### Installation
+
+**1. Clone the repository**
+
+```bash
+git clone <repository-url>
+cd Stretch2_SimulationEnv-main
+```
+
+**2. Create the conda environment (first time)**
 
 ```bash
 conda env create -f environment.yml
 ```
 
-**Update the environment (after pulling updates from GitHub)**
+**3. Update the environment (after pulling updates from GitHub)**
 
 ```bash
 conda env update -f environment.yml --prune
 ```
 
-**Activate the environment**
+**4. Activate the environment**
 
 ```bash
 conda activate simenv
 ```
 
-**Run a test script**
+**5. Verify the setup**
 
 ```bash
-python3 test.py
+python verify_setup.py
 ```
+
+This script will check:
+- Conda environment activation
+- Required Python packages
+- Required files and directories
+- MuJoCo model loading
+
+### Running the Simulation
+
+**Teleoperation (Interactive Control)**
+
+```bash
+conda activate simenv
+python teleop.py
+```
+
+This will launch an interactive MuJoCo viewer where you can control the Stretch robot using keyboard controls:
+- **W/S**: Move base forward/backward
+- **A/D**: Turn left/right
+- **Q/E**: Lift up/down
+- **R/F**: Arm extend/retract
+- **T/G**: Wrist yaw rotate
+- **Z/X**: Gripper open/close
+- **Arrow Keys**: Head pan/tilt
+- **ESC**: Exit
+
+**View World**
+
+```bash
+conda activate simenv
+python view_world.py
+```
+
+**Check Mesh Properties**
+
+```bash
+conda activate simenv
+python checkmesh.py
+```
+
+### Portability
+
+This repository is designed to work on any computer without modification:
+- ✅ All paths are relative to the repository root
+- ✅ No hardcoded user-specific paths
+- ✅ Works on Linux, macOS, and Windows (with conda)
+- ✅ Scripts can be run from any directory
 
 ---
 
