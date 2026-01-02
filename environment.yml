@@ -31,7 +31,7 @@ dependencies:
   - pandas=2.3.3
   - pip=25.3
   - pthread-stubs=0.3
-  - python=3.11.14
+  - python=3.11.14  # Keep Python 3.11 for compatibility. Use simenv_ros2 for ROS 2.
   - python-dateutil=2.9.0post0
   - python-tzdata=2025.2
   - pytz=2025.2
@@ -88,3 +88,6 @@ dependencies:
       - typing-extensions==4.15.0
       - urchin==0.0.30
       - zipp==3.23.0
+      # ROS 2 dependencies (requires ROS 2 to be installed system-wide)
+      # Install ROS 2 first: https://docs.ros.org/en/humble/Installation.html
+      # Then install Python packages: pip install rclpy geometry-msgs sensor-msgs std-msgs

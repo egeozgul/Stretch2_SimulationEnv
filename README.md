@@ -84,6 +84,33 @@ conda activate simenv
 python checkmesh.py
 ```
 
+**ROS 2 Control (Optional)**
+
+For ROS 2 communication, first install ROS 2 (Humble or Jazzy) and then:
+
+```bash
+# Install ROS 2 Python package
+conda activate simenv
+pip install rclpy
+
+# Source ROS 2 (adjust path for your version)
+source /opt/ros/humble/setup.bash
+
+# Start the simulation node
+python stretch_ros2_sim.py
+```
+
+In another terminal, use the keyboard controller:
+```bash
+conda activate simenv
+source /opt/ros/humble/setup.bash
+python stretch_keyboard_controller.py
+```
+
+Press **A, B, C, or D** to send navigation commands to those anchors.
+
+See [ROS2_SETUP.md](ROS2_SETUP.md) for detailed ROS 2 setup instructions.
+
 ### Portability
 
 This repository is designed to work on any computer without modification:
@@ -109,7 +136,8 @@ Build a modular simulation environment for the **Stretch 2 robot**, supporting:
 
 * [ ] Finalize Conda environment file with all dependencies
 * [ ] Evaluate alternative simulators (e.g., PyBullet)
-* [ ] Add ROS 2 integration (Jazzy/Humble)
+* [x] Add ROS 2 integration (Jazzy/Humble) - Basic communication implemented
+* [ ] Implement navigation to anchors (A, B, C, D)
 * [ ] Implement wheel and actuator motion
 * [ ] Add environment objects (tables, containers, ingredients)
 * [ ] Create demo scripts and visualization tools
