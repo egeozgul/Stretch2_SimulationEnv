@@ -2,19 +2,16 @@
 
 import os
 import re
+import math
 import numpy as np
 
 
 def load_anchors_from_xml(xml_path=None):
     """
-    Load anchor positions from MuJoCo XML file.
-    Uses regex parsing to avoid XML parsing issues with malformed attributes.
-    
-    Args:
-        xml_path: Path to XML file. If None, looks for table_world.xml in script directory.
+    Load anchor positions and directions from MuJoCo XML file.
     
     Returns:
-        dict: Dictionary mapping anchor letters to positions {'A': [x, y, z], ...}
+        dict: {'A': {'pos': [x, y, z], 'direction': angle_rad}, ...}
     """
     if xml_path is None:
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -23,43 +20,41 @@ def load_anchors_from_xml(xml_path=None):
     if not os.path.exists(xml_path):
         raise FileNotFoundError(f"XML file not found: {xml_path}")
     
-    anchors = {}
-    
-    # Read file and use regex to find anchor sites
     with open(xml_path, 'r') as f:
         content = f.read()
     
-    # Pattern to match: <site name="anchor_X" pos="x y z" ... />
-    # This handles malformed XML better than ET.parse
+    anchors = {}
     pattern = r'<site\s+name="anchor_([A-Za-z])"[^>]*pos="([^"]+)"'
     
     for match in re.finditer(pattern, content):
         anchor_letter = match.group(1).upper()
         pos_str = match.group(2)
         
-        # Parse position string (format: "x y z" or "x y")
+        # Look for direction in comment
+        comment_pattern = rf'<!--\s*anchor_{anchor_letter}\s+direction="([^"]+)"\s*-->'
+        direction_match = re.search(comment_pattern, content, re.IGNORECASE)
+        direction_str = direction_match.group(1) if direction_match else None
+        
         try:
             pos_values = [float(x) for x in pos_str.split()]
             if len(pos_values) >= 2:
-                # Use x, y, z (pad with 0.0 if z not provided)
                 pos = pos_values[:3] if len(pos_values) >= 3 else pos_values + [0.0]
-                anchors[anchor_letter] = pos
+                anchor_data = {'pos': pos}
+                
+                if direction_str:
+                    try:
+                        anchor_data['direction'] = math.radians(float(direction_str))
+                    except ValueError:
+                        pass
+                
+                anchors[anchor_letter] = anchor_data
         except ValueError:
-            continue  # Skip invalid positions
+            continue
     
     return anchors
 
 
 def get_anchor_list(xml_path=None):
-    """
-    Get list of available anchor letters.
-    
-    Args:
-        xml_path: Path to XML file. If None, looks for table_world.xml in script directory.
-    
-    Returns:
-        list: Sorted list of anchor letters ['A', 'B', 'C', ...]
-    """
+    """Get sorted list of available anchor letters."""
     anchors = load_anchors_from_xml(xml_path)
     return sorted(anchors.keys())
-

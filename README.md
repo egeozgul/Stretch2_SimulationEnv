@@ -1,158 +1,109 @@
 # Stretch2_SimulationEnv
 
-A lightweight simulation environment for the **Hello Robot Stretch 2** platform.
-This project uses **MuJoCo**, **Python**, and optionally **ROS 2** to simulate robot motion, interactions, and custom environments.
+A lightweight simulation environment for the **Hello Robot Stretch 2** platform using **MuJoCo**, **Python**, and optionally **ROS 2**.
 
----
+## Features
 
-## 🔧 Setup Instructions
+- ✅ MuJoCo-based physics simulation
+- ✅ Interactive keyboard control
+- ✅ ROS 2 communication (optional)
+- ✅ Autonomous navigation to anchor points
+- ✅ Real-time camera feed
+- ✅ Joint and base control
+- ✅ Custom environments with tables and objects
 
-### Prerequisites
+## Quick Start
 
-- Conda (Miniconda or Anaconda)
-- Python 3.11
-
-### Installation
-
-**1. Clone the repository**
-
-```bash
-git clone <repository-url>
-cd Stretch2_SimulationEnv-main
-```
-
-**2. Create the conda environment (first time)**
+### Regular Simulation (No ROS 2)
 
 ```bash
+# Create and activate environment
 conda env create -f environment.yml
-```
-
-**3. Update the environment (after pulling updates from GitHub)**
-
-```bash
-conda env update -f environment.yml --prune
-```
-
-**4. Activate the environment**
-
-```bash
 conda activate simenv
-```
 
-**5. Verify the setup**
-
-```bash
-python verify_setup.py
-```
-
-This script will check:
-- Conda environment activation
-- Required Python packages
-- Required files and directories
-- MuJoCo model loading
-
-### Running the Simulation
-
-**Teleoperation (Interactive Control)**
-
-```bash
-conda activate simenv
+# Run interactive simulation
 python teleop.py
 ```
 
-This will launch an interactive MuJoCo viewer where you can control the Stretch robot using keyboard controls:
-- **W/S**: Move base forward/backward
-- **A/D**: Turn left/right
-- **Q/E**: Lift up/down
-- **R/F**: Arm extend/retract
-- **T/G**: Wrist yaw rotate
-- **Z/X**: Gripper open/close
-- **Arrow Keys**: Head pan/tilt
-- **ESC**: Exit
-
-**View World**
+### ROS 2 Simulation
 
 ```bash
-conda activate simenv
-python view_world.py
-```
+# Create ROS 2 environment
+conda env create -f environment_ros2.yml
+conda activate simenv_ros2
+source /opt/ros/jazzy/setup.bash
 
-**Check Mesh Properties**
+# Start simulation
+./run_ros2_sim.sh
 
-```bash
-conda activate simenv
-python checkmesh.py
-```
-
-**ROS 2 Control (Optional)**
-
-For ROS 2 communication, first install ROS 2 (Humble or Jazzy) and then:
-
-```bash
-# Install ROS 2 Python package
-conda activate simenv
-pip install rclpy
-
-# Source ROS 2 (adjust path for your version)
-source /opt/ros/humble/setup.bash
-
-# Start the simulation node
-python stretch_ros2_sim.py
-```
-
-In another terminal, use the keyboard controller:
-```bash
-conda activate simenv
-source /opt/ros/humble/setup.bash
+# In another terminal, use keyboard controller
+conda activate simenv_ros2
+source /opt/ros/jazzy/setup.bash
 python stretch_keyboard_controller.py
 ```
 
-Press **A, B, C, or D** to send navigation commands to those anchors.
+## Keyboard Controls
 
-See [ROS2_SETUP.md](ROS2_SETUP.md) for detailed ROS 2 setup instructions.
+- **W/S** - Move forward/backward
+- **A/D** - Turn left/right
+- **1/2/3/4** - Navigate to anchors (A, B, C, D)
+- **Q/E** - Lift up/down
+- **R/F** - Arm extend/retract
+- **T/G** - Wrist yaw rotate
+- **V/B** - Wrist roll rotate
+- **Z/X** - Gripper open/close
+- **Arrow Keys** - Pan/tilt head
+- **ESC** - Exit
 
-### Portability
+## Documentation
 
-This repository is designed to work on any computer without modification:
-- ✅ All paths are relative to the repository root
-- ✅ No hardcoded user-specific paths
-- ✅ Works on Linux, macOS, and Windows (with conda)
-- ✅ Scripts can be run from any directory
+- **[SETUP.md](SETUP.md)** - Complete setup instructions (environments, ROS 2, Python version)
+- **[USAGE.md](USAGE.md)** - Usage guide (running, navigation, testing, troubleshooting)
+- **[TEST_RESULTS.md](TEST_RESULTS.md)** - Test results and verification
 
----
+## Project Structure
 
-## 🎯 Goal
+```
+Stretch2_SimulationEnv-main/
+├── stretch.xml              # Robot model
+├── table_world.xml          # World with anchors
+├── stretch_ros2_sim.py     # Main ROS 2 simulation node
+├── stretch_keyboard_controller.py  # Keyboard controller
+├── navigation.py            # Navigation controller
+├── teleop.py               # Direct keyboard control
+├── environment.yml         # Conda environment (Python 3.11)
+├── environment_ros2.yml    # Conda environment (Python 3.12, ROS 2)
+└── assets/                 # 3D models and textures
+```
+
+## ROS 2 Topics
+
+**Subscribed:**
+- `/stretch/cmd_vel` - Base velocity commands
+- `/stretch/joint_commands` - Joint position commands
+- `/stretch/navigate_to_anchor` - Navigate to anchor command
+
+**Published:**
+- `/stretch/joint_states` - Current joint states
+- `/stretch/navigation_active` - Navigation status
+- `/stretch/camera/image_raw` - Camera feed
+
+## Goals
 
 Build a modular simulation environment for the **Stretch 2 robot**, supporting:
 
 * Custom MuJoCo-based environments
 * Robot joint and wheel actuation
 * Interactive scenes with tables, objects, and ingredients
-* (Optional) ROS 2 control and visualization
+* ROS 2 control and visualization
+* Autonomous navigation
 
----
+## Resources
 
-## 📝 TODO
+* [Stretch 2 ROS 2 Description](https://docs.hello-robot.com/0.2/stretch-ros2/stretch_description/)
+* [Stretch 2 STEP/URDF Files](https://github.com/hello-robot/stretch_tool_share/tree/master/tool_share/stretch_2_STEP)
+* [Stretch Tool Share Repository](https://github.com/hello-robot/stretch_tool_share/)
 
-* [ ] Finalize Conda environment file with all dependencies
-* [ ] Evaluate alternative simulators (e.g., PyBullet)
-* [x] Add ROS 2 integration (Jazzy/Humble) - Basic communication implemented
-* [ ] Implement navigation to anchors (A, B, C, D)
-* [ ] Implement wheel and actuator motion
-* [ ] Add environment objects (tables, containers, ingredients)
-* [ ] Create demo scripts and visualization tools
+## License
 
----
-
-## 🔗 Useful Stretch 2 Resources
-
-* Stretch 2 ROS 2 Description
-  [https://docs.hello-robot.com/0.2/stretch-ros2/stretch_description/](https://docs.hello-robot.com/0.2/stretch-ros2/stretch_description/)
-
-* Stretch 2 STEP/URDF Files
-  [https://github.com/hello-robot/stretch_tool_share/tree/master/tool_share/stretch_2_STEP](https://github.com/hello-robot/stretch_tool_share/tree/master/tool_share/stretch_2_STEP)
-
-* Stretch Tool Share Repository
-  [https://github.com/hello-robot/stretch_tool_share/?tab=readme-ov-file](https://github.com/hello-robot/stretch_tool_share/?tab=readme-ov-file)
-
----
+[Add your license here]

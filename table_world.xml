@@ -39,12 +39,16 @@
   <include file="stretch.xml"/>
   <worldbody>
     <site name="anchor_A" pos="-0.65 1 0.00" size="0.15" rgba="0 1 0 0.5" type="sphere"/>
+    <!-- anchor_A direction="270" -->
     
     <site name="anchor_B" pos="0.65 1 0.00" size="0.15" rgba="1 0 0 0.5" type="sphere"/>
+    <!-- anchor_B direction="270" -->
 
     <site name="anchor_C" pos="-1.0 5 0.00" size="0.15" rgba="1 0 0 0.5" type="sphere"/>
+    <!-- anchor_C direction="90" -->
 
     <site name="anchor_D" pos="1.0 5 0.00" size="0.15" rgba="1 0 0 0.5" type="sphere"/>
+    <!-- anchor_D direction="90" -->
 
     <!-- Lighting for large space -->
     <light directional="true" diffuse="0.8 0.8 0.8" specular="0.3 0.3 0.3" pos="0 0 10" dir="0 0 -1" castshadow="true"/>
