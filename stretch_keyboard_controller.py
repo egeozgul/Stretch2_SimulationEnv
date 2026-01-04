@@ -52,10 +52,10 @@ class StretchKeyboardController(Node):
         try:
             anchor_list = get_anchor_list()
             self.anchor_map = {str(i): letter for i, letter in 
-                              enumerate(sorted(anchor_list)[:4], start=1)}
+                              enumerate(sorted(anchor_list)[:5], start=1)}
         except Exception as e:
             self.get_logger().warn(f'Failed to load anchors: {e}, using default')
-            self.anchor_map = {'1': 'A', '2': 'B', '3': 'C', '4': 'D'}
+            self.anchor_map = {'1': 'A', '2': 'B', '3': 'C', '4': 'D', '5': 'E'}
         
         self.cmd_vel_pub = self.create_publisher(Twist, '/stretch/cmd_vel', 10)
         self.anchor_pub = self.create_publisher(String, '/stretch/navigate_to_anchor', 10)
@@ -155,16 +155,16 @@ def main(args=None):
     try:
         anchor_list = get_anchor_list()
         anchor_map = {str(i): letter for i, letter in 
-                     enumerate(sorted(anchor_list)[:4], start=1)}
+                     enumerate(sorted(anchor_list)[:5], start=1)}
         anchor_str = '/'.join([f'{k}→{v}' for k, v in sorted(anchor_map.items())])
     except:
-        anchor_str = "1→A/2→B/3→C/4→D"
+        anchor_str = "1→A/2→B/3→C/4→D/5→E"
     
     print("\n" + "="*50)
     print("Stretch 2 Keyboard Controller")
     print("="*50)
     print("Base Movement:")
-    print(f"  {anchor_str} - Navigate to anchors (1-4)")
+    print(f"  {anchor_str} - Navigate to anchors (1-5)")
     print("  W/S - Move forward/backward")
     print("  A/D - Turn left/right")
     print("\nArm & Gripper:")

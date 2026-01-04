@@ -13,7 +13,7 @@
     <mesh name="onion" file="../meshes/onion.obj" scale="0.013 0.013 0.013"/>
     <texture name="onion_tex" type="2d" file="../textures/Red_onion_diffuse.png"/>
     <material name="onion_mat" texture="onion_tex"/>
-    <mesh name="plate" file="../meshes/plate.obj"/>
+    <mesh name="plate" file="../meshes/plate.obj" scale="0.75 0.75 0.75"/>
     <mesh name="bell" file="../meshes/bell.obj" />
     <texture name="bell_tex" type="2d" file="../textures/Material.001_baseColor.png"/>
     <material name="bell_mat" texture="bell_tex"/>
@@ -39,16 +39,19 @@
   <include file="stretch.xml"/>
   <worldbody>
     <site name="anchor_A" pos="-0.65 1 0.00" size="0.15" rgba="0 1 0 0.5" type="sphere"/>
-    <!-- anchor_A direction="270" -->
+    <!-- anchor_A direction="0" -->
     
     <site name="anchor_B" pos="0.65 1 0.00" size="0.15" rgba="1 0 0 0.5" type="sphere"/>
-    <!-- anchor_B direction="270" -->
+    <!-- anchor_B direction="0" -->
 
-    <site name="anchor_C" pos="-1.0 5 0.00" size="0.15" rgba="1 0 0 0.5" type="sphere"/>
-    <!-- anchor_C direction="90" -->
+    <site name="anchor_C" pos="-1.0 3.5 0.00" size="0.15" rgba="1 0 0 0.5" type="sphere"/>
+    <!-- anchor_C direction="180" -->
 
-    <site name="anchor_D" pos="1.0 5 0.00" size="0.15" rgba="1 0 0 0.5" type="sphere"/>
-    <!-- anchor_D direction="90" -->
+    <site name="anchor_D" pos="1.0 3.5 0.00" size="0.15" rgba="1 0 0 0.5" type="sphere"/>
+    <!-- anchor_D direction="180" -->
+
+    <site name="anchor_E" pos="1.5 2.25 0.00" size="0.15" rgba="0 0 1 0.5" type="sphere"/>
+    <!-- anchor_E direction="90" -->
 
     <!-- Lighting for large space -->
     <light directional="true" diffuse="0.8 0.8 0.8" specular="0.3 0.3 0.3" pos="0 0 10" dir="0 0 -1" castshadow="true"/>
@@ -83,64 +86,69 @@
 
     
     <!-- table 2 elements-->
-    <body name="onion1" pos="-1.0 5.42 1.05">
+    <body name="onion1" pos="-1.0 3.92 1.05">
       <joint type="free" damping="0.001"/>
       <geom name="onion1_geom" type="mesh" mesh="onion" material="onion_mat" mass="0.15" friction="1.5 0.8 0.8"/>
       <site name="onion1_site" size="0.01" rgba="1 1 0 1"/>
     </body>
     
-    <body name="onion2" pos="-0.85 5.42 1.05">
+    <body name="onion2" pos="-0.85 3.92 1.05">
       <joint type="free" damping="0.001"/>
       <geom name="onion2_geom" type="mesh" mesh="onion" material="onion_mat" mass="0.15" friction="1.5 0.8 0.8"/>
       <site name="onion2_site" size="0.01" rgba="1 1 0 1"/>
     </body>
     
-    <body name="onion3" pos="-1.0 5.54 1.05">
+    <body name="onion3" pos="-1.0 4.04 1.05">
       <joint type="free" damping="0.001"/>
       <geom name="onion3_geom" type="mesh" mesh="onion" material="onion_mat" mass="0.15" friction="1.5 0.8 0.8"/>
       <site name="onion3_site" size="0.01" rgba="1 1 0 1"/>
     </body>
 
-    <body name="tomato1" pos="1.0 5.42 1.05">
+    <body name="tomato1" pos="1.0 3.92 1.05">
       <joint type="free" damping="0.001"/>
       <geom name="tomato1_geom" type="mesh" mesh="tomato" material="tomato_mat" mass="0.13" friction="1.5 0.8 0.8"/>
       <site name="tomato1_site" size="0.01" rgba="1 0 0 1"/>
     </body>
     
-    <body name="tomato2" pos="0.85 5.42 1.05">
+    <body name="tomato2" pos="0.85 3.92 1.05">
       <joint type="free" damping="0.001"/>
       <geom name="tomato2_geom" type="mesh" mesh="tomato" material="tomato_mat" mass="0.13" friction="1.5 0.8 0.8"/>
       <site name="tomato2_site" size="0.01" rgba="1 0 0 1"/>
     </body>
     
-    <body name="tomato3" pos="1.0 5.54 1.05">
+    <body name="tomato3" pos="1.0 4.04 1.05">
       <joint type="free" damping="0.001"/>
       <geom name="tomato3_geom" type="mesh" mesh="tomato" material="tomato_mat" mass="0.13" friction="1.5 0.8 0.8"/>
       <site name="tomato3_site" size="0.01" rgba="1 0 0 1"/>
     </body>
 
 
-    <body name="bell1" pos="-0.1 5.42 1.02">
+    <body name="bell1" pos="-0.1 3.92 1.02">
       <joint type="free" damping="0.001"/>
       <geom name="bell1_geom" type="mesh" mesh="bell" material="bell_mat" mass="0.11" friction="1.5 0.8 0.8"/>
       <site name="bell1_site" size="0.01" rgba="0 1 0 1"/>
     </body>
 
-    <body name="bell2" pos="0.1 5.42 1.02">
+    <body name="bell2" pos="0.1 3.92 1.02">
       <joint type="free" damping="0.001"/>
       <geom name="bell2_geom" type="mesh" mesh="bell" material="bell_mat" mass="0.11" friction="1.5 0.8 0.8"/>
       <site name="bell2_site" size="0.01" rgba="0 1 0 1"/>
     </body>
 
-    <body name="bell3" pos="-0.1 5.54 1.02">
+    <body name="bell3" pos="-0.1 4.04 1.02">
       <joint type="free" damping="0.001"/>
       <geom name="bell3_geom" type="mesh" mesh="bell" material="bell_mat" mass="0.11" friction="1.5 0.8 0.8"/>
       <site name="bell3_site" size="0.01" rgba="0 1 0 1"/>
     </body>
 
 
-    <body name="table2" pos="0 6 0">
+    <body name="table2" pos="0 4.5 0">
       <geom name="table2_geom" type="mesh" mesh="table" material="table_mat" friction="0.8 0.5 0.5"/>
+    </body>
+    
+    <!-- TABLE 3: Rotated 90 degrees, placed between tables and to the side -->
+    <body name="table3" pos="2.5 2.25 0" quat="0.707 0 0 0.707">
+      <geom name="table3_geom" type="mesh" mesh="table" material="table_mat" friction="0.8 0.5 0.5"/>
     </body>
     
     
