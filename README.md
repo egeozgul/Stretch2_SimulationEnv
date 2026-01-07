@@ -154,7 +154,3 @@ Stretch2_SimulationEnv/
 - [Stretch 2 Documentation](https://docs.hello-robot.com/)
 - [MuJoCo Documentation](https://mujoco.readthedocs.io/)
 - [ROS 2 Documentation](https://docs.ros.org/)
-
-## License
-
-[Add your license here]
