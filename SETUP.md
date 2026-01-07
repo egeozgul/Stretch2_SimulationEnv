@@ -2,13 +2,13 @@
 
 Complete setup instructions for the Stretch 2 Simulation Environment.
 
-## 📋 Prerequisites
+## Prerequisites
 
 - **Conda** (Miniconda or Anaconda)
 - **ROS 2 Jazzy** (for ROS 2 features)
 - **Python 3.12**
 
-## 🚀 Installation
+## Installation
 
 ### 1. Clone Repository
 
@@ -37,12 +37,12 @@ python verify_setup.py
 ```
 
 This checks:
-- ✅ Conda environment activation
-- ✅ Required Python packages
-- ✅ Required files and directories
-- ✅ MuJoCo model loading
+- Conda environment activation
+- Required Python packages
+- Required files and directories
+- MuJoCo model loading
 
-## 🔧 ROS 2 Setup
+## ROS 2 Setup
 
 ### Install ROS 2
 
@@ -63,10 +63,10 @@ Note: ROS 2 message packages (`geometry_msgs`, `sensor_msgs`, `std_msgs`) are in
 
 ```bash
 source /opt/ros/jazzy/setup.bash
-python -c "import rclpy; print('✓ ROS 2 ready')"
+python -c "import rclpy; print('ROS 2 ready')"
 ```
 
-## 🔌 ROS 2 Topics
+## ROS 2 Topics
 
 ### Subscribed (Commands)
 - `/stretch/cmd_vel` - Base velocity commands
@@ -81,7 +81,7 @@ python -c "import rclpy; print('✓ ROS 2 ready')"
 - `/stretch/navigation_active` - Navigation status
 - `/stretch/camera/image_raw` - Camera feed
 
-## 🔄 Environment Management
+## Environment Management
 
 ### Activate Environment
 
@@ -102,7 +102,7 @@ conda env update -f environment_ros2.yml --prune
 conda env remove -n simenv_ros2
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### "No module named 'rclpy'"
 - Ensure ROS 2 is installed
@@ -123,7 +123,7 @@ conda env remove -n simenv_ros2
 - Check: `python --version`
 - Recreate environment if needed
 
-## 📦 Dependencies
+## Dependencies
 
 ### Core
 - `mujoco` - Physics simulation
@@ -135,15 +135,15 @@ conda env remove -n simenv_ros2
 - `rclpy` - ROS 2 Python client
 - ROS 2 message packages (via ROS 2 installation)
 
-## 🌐 Portability
+## Portability
 
 This repository is designed to work on any system:
-- ✅ All paths are relative
-- ✅ No hardcoded user-specific paths
-- ✅ Works on Linux, macOS, Windows (with conda)
-- ✅ Scripts can be run from any directory
+- All paths are relative
+- No hardcoded user-specific paths
+- Works on Linux, macOS, Windows (with conda)
+- Scripts can be run from any directory
 
-## 📚 Additional Resources
+## Additional Resources
 
 - [ROS 2 Documentation](https://docs.ros.org/)
 - [MuJoCo Documentation](https://mujoco.readthedocs.io/)

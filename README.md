@@ -4,7 +4,7 @@ A high-fidelity MuJoCo-based simulation environment for the **Hello Robot Stretc
 
 ![Simulation Screenshot](media/screenshot.png)
 
-## ✨ Features
+## Features
 
 - **Physics Simulation** - MuJoCo-based realistic robot dynamics
 - **ROS 2 Integration** - Full ROS 2 communication stack
@@ -13,7 +13,7 @@ A high-fidelity MuJoCo-based simulation environment for the **Hello Robot Stretc
 - **Real-time Visualization** - Live camera feed and 3D viewer
 - **Action System** - YAML-defined micro and macro actions
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -53,7 +53,7 @@ source /opt/ros/jazzy/setup.bash
 python interactive_controller.py
 ```
 
-## 🎮 Interactive Controller
+## Interactive Controller
 
 The interactive controller provides an elegant command-line interface:
 
@@ -71,7 +71,7 @@ stretch> turn_towards anchor=ORIGIN  # Turn towards center
 - Tab completion
 - Action composition via macro actions
 
-## 📋 Available Actions
+## Available Actions
 
 ### Navigation
 - `go_to_anchor anchor=<A-F|ORIGIN> [speed=0.5]` - Navigate to anchor
@@ -91,13 +91,13 @@ stretch> turn_towards anchor=ORIGIN  # Turn towards center
 - `wait duration=<seconds>` - Wait for duration
 - `wait_for_arm [timeout=<seconds>]` - Wait until arm reaches target
 
-## 🗺️ Anchors
+## Anchors
 
 Predefined navigation points in the world:
 - **A, B, C, D, E, F** - Table positions
 - **ORIGIN** - Center point (average of all anchors)
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Stretch2_SimulationEnv/
@@ -111,7 +111,7 @@ Stretch2_SimulationEnv/
 └── assets/                       # 3D models and textures
 ```
 
-## 🔌 ROS 2 Topics
+## ROS 2 Topics
 
 ### Subscribed
 - `/stretch/cmd_vel` - Base velocity commands
@@ -126,25 +126,25 @@ Stretch2_SimulationEnv/
 - `/stretch/navigation_active` - Navigation status
 - `/stretch/camera/image_raw` - Camera feed
 
-## 📚 Documentation
+## Documentation
 
 - **[SETUP.md](SETUP.md)** - Detailed setup instructions
 - **[USAGE.md](USAGE.md)** - Complete usage guide
 - **[actions.yaml](actions.yaml)** - Action definitions and examples
 
-## 🎯 Design Philosophy
+## Design Philosophy
 
 - **Normalized Parameters** - All movement parameters use 0-1 range (0=min, 0.5=middle, 1=max)
 - **Action Composition** - Macro actions built from micro actions
 - **Speed Control** - All movements support speed control (0-1 range)
 - **State Synchronization** - Joint states automatically sync with robot
 
-## 🔗 Resources
+## Resources
 
 - [Stretch 2 Documentation](https://docs.hello-robot.com/)
 - [MuJoCo Documentation](https://mujoco.readthedocs.io/)
 - [ROS 2 Documentation](https://docs.ros.org/)
 
-## 📄 License
+## License
 
 [Add your license here]

@@ -2,7 +2,7 @@
 
 Complete guide for using the Stretch 2 Simulation Environment.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Running the Simulation
 
@@ -27,7 +27,7 @@ source /opt/ros/jazzy/setup.bash
 python stretch_keyboard_controller.py
 ```
 
-## 🎮 Interactive Controller
+## Interactive Controller
 
 The interactive controller provides a modern command-line interface with action-based control.
 
@@ -70,7 +70,7 @@ stretch> wait_for_arm timeout=5.0
 - **Normalized Parameters** - All parameters use 0-1 range (0=min, 0.5=middle, 1=max)
 - **Speed Control** - Optional speed parameter for all movements (default: 0.5)
 
-## ⌨️ Keyboard Controller
+## Keyboard Controller
 
 Alternative control method using keyboard shortcuts.
 
@@ -94,7 +94,7 @@ Alternative control method using keyboard shortcuts.
 - `0` - Reset arm
 - `ESC` - Exit
 
-## 🧭 Navigation System
+## Navigation System
 
 ### Overview
 
@@ -144,7 +144,7 @@ Manual velocity commands automatically cancel navigation:
 ros2 topic pub /stretch/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.5}}"
 ```
 
-## 🤖 Arm Control
+## Arm Control
 
 ### Normalized Parameters
 
@@ -181,7 +181,7 @@ All movements support optional speed control (0-1 range):
 - `speed=0.5` - Normal (default)
 - `speed=1.0` - Maximum speed
 
-## 🧪 Testing
+## Testing
 
 ### Quick Test
 
@@ -213,7 +213,7 @@ ros2 topic pub --once /stretch/joint_commands std_msgs/msg/Float64MultiArray "{d
 ros2 topic echo /stretch/joint_states
 ```
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Robot doesn't turn around center
 - Ensure forward velocity is zero when turning
@@ -238,7 +238,7 @@ ros2 topic echo /stretch/joint_states
 - Try moving head with arrow keys
 - Check camera rendering in simulation window
 
-## 📊 Available Scripts
+## Available Scripts
 
 | Script | Purpose | Environment |
 |--------|---------|-------------|
