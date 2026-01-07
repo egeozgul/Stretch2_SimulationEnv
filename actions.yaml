@@ -1,0 +1,337 @@
+# Stretch 2 Robot Action Definitions
+# This file defines macro actions (complex behaviors) composed of micro actions (primitive commands)
+#
+# Structure:
+#   - micro_actions: Basic robot commands (go to anchor, reset arm, etc.)
+#   - macro_actions: Complex behaviors built from micro actions
+#
+# Usage:
+#   Actions can reference other actions, allowing composition and reuse
+#   Parameters can be passed to actions for flexibility
+
+# ============================================================================
+# MICRO ACTIONS (Primitive Commands)
+# ============================================================================
+# These are the basic building blocks that the robot can execute directly
+
+micro_actions:
+  # Navigation actions
+  - name: "go_to_anchor"
+    type: "navigation"
+    description: "Navigate to a specific anchor point (A, B, C, D, E, F, ORIGIN) (Usage: go_to_anchor anchor=A speed=0.5)"
+    parameters:
+      anchor: "string"  # Anchor identifier: A, B, C, D, E, F, or ORIGIN
+      speed: "float"  # Optional: Speed 0-1 (default: 0.5). 0=min, 0.5=middle, 1=max
+    
+  - name: "turn_towards"
+    type: "navigation"
+    description: "Turn robot towards a specific anchor without moving (Usage: turn_towards anchor=ORIGIN speed=0.5)"
+    parameters:
+      anchor: "string"  # Anchor identifier: A, B, C, D, E, F, or ORIGIN
+      speed: "float"  # Optional: Speed 0-1 (default: 0.5). 0=min, 0.5=middle, 1=max
+    
+  - name: "go_to_position"
+    type: "navigation"
+    description: "Navigate to a specific (x, y) position (Usage: go_to_position x=0.5 y=0.5 speed=0.5)"
+    parameters:
+      x: "float"  # X position 0-1 (0=min, 0.5=middle, 1=max)
+      y: "float"  # Y position 0-1 (0=min, 0.5=middle, 1=max)
+      direction: "float"  # Optional: target orientation 0-1 (0=0°, 0.5=180°, 1=360°)
+      speed: "float"  # Optional: Speed 0-1 (default: 0.5). 0=min, 0.5=middle, 1=max
+    
+  # Arm control actions
+  - name: "reset_arm"
+    type: "arm_control"
+    description: "Reset arm to default position (lift up, arm retracted, gripper open, wrist centered) (Usage: reset_arm speed=0.5)"
+    parameters:
+      speed: "float"  # Optional: Speed 0-1 (default: 0.5). Controls how fast all actuators move together. 0=min, 0.5=middle, 1=max
+    
+  - name: "elevate_arm"
+    type: "arm_control"
+    description: "Move lift to a specific height (Usage: elevate_arm height=0.5 speed=0.5)"
+    parameters:
+      height: "float"  # Height 0-1 (0=min, 0.5=middle, 1=max)
+      speed: "float"  # Optional: Speed 0-1 (default: 0.5). 0=min, 0.5=middle, 1=max
+    
+  - name: "extend_arm"
+    type: "arm_control"
+    description: "Extend or retract the arm to a specific length (Usage: extend_arm length=0.5 speed=0.5)"
+    parameters:
+      length: "float"  # Extension length 0-1 (0=min/retracted, 0.5=middle, 1=max/extended)
+      speed: "float"  # Optional: Speed 0-1 (default: 0.5). 0=min, 0.5=middle, 1=max
+    
+  - name: "rotate_wrist"
+    type: "arm_control"
+    description: "Rotate wrist yaw to a specific angle (Usage: rotate_wrist angle=0.5 speed=0.5)"
+    parameters:
+      angle: "float"  # Angle 0-1 (0=min, 0.5=middle, 1=max)
+      speed: "float"  # Optional: Speed 0-1 (default: 0.5). 0=min, 0.5=middle, 1=max
+    
+  - name: "open_gripper"
+    type: "arm_control"
+    description: "Open gripper fully (Usage: open_gripper speed=0.5)"
+    parameters:
+      speed: "float"  # Optional: Speed 0-1 (default: 0.5). 0=min, 0.5=middle, 1=max
+    
+  - name: "close_gripper"
+    type: "arm_control"
+    description: "Close gripper fully (Usage: close_gripper speed=0.5)"
+    parameters:
+      speed: "float"  # Optional: Speed 0-1 (default: 0.5). 0=min, 0.5=middle, 1=max
+    
+  - name: "set_gripper"
+    type: "arm_control"
+    description: "Set gripper to a specific opening width (Usage: set_gripper width=0.5 speed=0.5)"
+    parameters:
+      width: "float"  # Width 0-1 (0=closed, 0.5=middle, 1=open)
+      speed: "float"  # Optional: Speed 0-1 (default: 0.5). 0=min, 0.5=middle, 1=max
+    
+  # Wait/delay actions
+  - name: "wait"
+    type: "utility"
+    description: "Wait for a specified duration (Usage: wait duration=2.0)"
+    parameters:
+      duration: "float"  # Duration in seconds
+    
+  - name: "wait_for_arm"
+    type: "utility"
+    description: "Wait until arm reaches target position (Usage: wait_for_arm timeout=5.0)"
+    parameters:
+      timeout: "float"  # Maximum wait time in seconds (optional)
+
+# ============================================================================
+# MACRO ACTIONS (Complex Behaviors)
+# ============================================================================
+# These are composed of sequences of micro actions and/or other macro actions
+
+macro_actions:
+  # Basic macro: Do nothing (stay in place)
+  - name: "stay"
+    description: "Stay in current position, do nothing"
+    sequence:
+      - action: "wait"
+        parameters:
+          duration: 0.1  # Minimal wait to keep action valid
+    
+  # Object retrieval macros
+  - name: "get_tomato"
+    description: "Navigate to tomato location and pick it up"
+    sequence:
+      - action: "reset_arm"
+        parameters:
+          speed: 0.07
+      - action: "turn_towards"
+        parameters:
+          anchor: "ORIGIN"
+          speed: 0.5
+      - action: "wait"
+        parameters:
+          duration: 10
+      - action: "go_to_anchor"
+        parameters:
+          anchor: "D"
+          speed: 0.9
+      # TODO: Define sequence of actions
+      # Example structure:
+      # - action: "go_to_anchor"
+      #   parameters:
+      #     anchor: "B"  # Example anchor near tomatoes
+      # - action: "reset_arm"
+      # - action: "elevate_arm"
+      #   parameters:
+      #     height: 0.4
+      # - action: "extend_arm"
+      #   parameters:
+      #     length: 0.3
+      # - action: "close_gripper"
+      - action: "wait"
+        parameters:
+          duration: 0.1
+    
+  - name: "get_lettuce"
+    description: "Navigate to lettuce location and pick it up"
+    sequence:
+      - action: "reset_arm"
+        parameters:
+          speed: 0.07
+      - action: "turn_towards"
+        parameters:
+          anchor: "ORIGIN"
+          speed: 0.5
+      - action: "wait"
+        parameters:
+          duration: 10
+      - action: "go_to_anchor"
+        parameters:
+          anchor: "A"
+          speed: 0.9
+      # TODO: Define sequence of actions
+      # Lettuce is on table 1, left side
+      - action: "wait"
+        parameters:
+          duration: 0.1
+    
+  - name: "get_onion"
+    description: "Navigate to onion location and pick it up"
+    sequence:
+      - action: "reset_arm"
+        parameters:
+          speed: 0.07
+      - action: "turn_towards"
+        parameters:
+          anchor: "ORIGIN"
+          speed: 0.5
+      - action: "wait"
+        parameters:
+          duration: 10
+      - action: "go_to_anchor"
+        parameters:
+          anchor: "C"
+          speed: 0.9
+      # TODO: Define sequence of actions
+      # Onion is on table 2, left side
+      - action: "wait"
+        parameters:
+          duration: 0.1
+    
+  - name: "get_plate"
+    description: "Navigate to plate location and pick it up"
+    sequence:
+      - action: "reset_arm"
+        parameters:
+          speed: 0.07
+      - action: "turn_towards"
+        parameters:
+          anchor: "ORIGIN"
+          speed: 0.5
+      - action: "wait"
+        parameters:
+          duration: 10
+      - action: "go_to_anchor"
+        parameters:
+          anchor: "E"
+          speed: 0.9
+      # TODO: Define sequence of actions
+      # Plates are on table 3
+      - action: "wait"
+        parameters:
+          duration: 0.1
+    
+  - name: "go_to_knife"
+    description: "Navigate to knife location"
+    sequence:
+      - action: "reset_arm"
+        parameters:
+          speed: 0.07
+      - action: "turn_towards"
+        parameters:
+          anchor: "ORIGIN"
+          speed: 0.5
+      - action: "wait"
+        parameters:
+          duration: 10
+      - action: "go_to_anchor"
+        parameters:
+          anchor: "B"
+          speed: 0.9
+      # TODO: Define sequence of actions
+      # Knife is in the middle of table 1
+      - action: "wait"
+        parameters:
+          duration: 0.1
+    
+  # Delivery macro
+  - name: "deliver"
+    description: "Navigate to delivery station and place object"
+    sequence:
+      - action: "turn_towards"
+        parameters:
+          anchor: "ORIGIN"
+          speed: 0.5
+      - action: "wait"
+        parameters:
+          duration: 10
+      - action: "go_to_anchor"
+        parameters:
+          anchor: "F"
+          speed: 0.9
+      # TODO: Define sequence of actions
+      # Delivery station is on table 3
+      # - action: "go_to_anchor"
+      #   parameters:
+      #     anchor: "E"  # Example anchor near delivery station
+      # - action: "elevate_arm"
+      #   parameters:
+      #     height: 0.5
+      # - action: "open_gripper"
+      - action: "wait"
+        parameters:
+          duration: 0.1
+
+# ============================================================================
+# ACTION PARAMETERS AND CONSTANTS
+# ============================================================================
+# Define common parameters and constants that can be referenced in actions
+
+constants:
+  # Anchor mappings (to be populated based on actual anchor positions)
+  anchors:
+    A: "Table 1, left side"
+    B: "Table 1, right side"
+    C: "Table 2, left side"
+    D: "Table 2, right side"
+    E: "Table 3 area"
+    F: "Table 3 area"
+  
+  # Object locations (approximate positions - to be refined)
+  object_positions:
+    tomato:
+      table: 2
+      side: "right"
+      approximate_y: 4.5
+    lettuce:
+      table: 1
+      side: "left"
+      approximate_y: 0.5
+    onion:
+      table: 2
+      side: "left"
+      approximate_y: 4.5
+    plate:
+      table: 3
+      approximate_x: 2.4
+      approximate_y: 2.5
+    knife:
+      table: 1
+      approximate_x: 0.0
+      approximate_y: 0.0
+  
+  # Arm positions
+  arm_positions:
+    default_lift: 0.6
+    default_arm_extend: 0.0
+    default_wrist_yaw: 1.125
+    default_gripper: 0.04
+    pickup_height: 0.4
+    delivery_height: 0.5
+
+# ============================================================================
+# NOTES FOR IMPLEMENTATION
+# ============================================================================
+# 
+# When implementing:
+# 1. Each micro action should map to a ROS2 command or function call
+# 2. Macro actions should execute their sequence sequentially
+# 3. Add error handling and timeout mechanisms
+# 4. Consider adding conditional logic (if/then) for complex behaviors
+# 5. May want to add action validation before execution
+# 6. Consider adding action status/feedback mechanisms
+# 7. Could add action composition (macro actions calling other macro actions)
+#
+# Future enhancements:
+# - Add parallel action execution
+# - Add action preconditions and postconditions
+# - Add action failure recovery strategies
+# - Add action monitoring and logging
+# - Add action parameter validation
+

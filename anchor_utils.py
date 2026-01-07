@@ -24,14 +24,15 @@ def load_anchors_from_xml(xml_path=None):
         content = f.read()
     
     anchors = {}
-    pattern = r'<site\s+name="anchor_([A-Za-z])"[^>]*pos="([^"]+)"'
+    # Pattern to match both single-letter anchors (A-F) and ORIGIN
+    pattern = r'<site\s+name="anchor_([A-Za-z_]+)"[^>]*pos="([^"]+)"'
     
     for match in re.finditer(pattern, content):
-        anchor_letter = match.group(1).upper()
+        anchor_name = match.group(1).upper()
         pos_str = match.group(2)
         
         # Look for direction in comment
-        comment_pattern = rf'<!--\s*anchor_{anchor_letter}\s+direction="([^"]+)"\s*-->'
+        comment_pattern = rf'<!--\s*anchor_{re.escape(anchor_name)}\s+direction="([^"]+)"\s*-->'
         direction_match = re.search(comment_pattern, content, re.IGNORECASE)
         direction_str = direction_match.group(1) if direction_match else None
         
@@ -47,7 +48,9 @@ def load_anchors_from_xml(xml_path=None):
                     except ValueError:
                         pass
                 
-                anchors[anchor_letter] = anchor_data
+                # Store as "ORIGIN" if it's anchor_ORIGIN, otherwise use single letter
+                anchor_key = "ORIGIN" if anchor_name == "ORIGIN" else anchor_name
+                anchors[anchor_key] = anchor_data
         except ValueError:
             continue
     

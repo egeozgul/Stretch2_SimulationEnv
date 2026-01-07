@@ -17,6 +17,7 @@ import cv2
 from navigation import NavigationController
 from anchor_utils import load_anchors_from_xml
 
+# Joint configuration
 JOINT_NAMES = [
     'joint_lift', 'joint_arm_l0', 'joint_arm_l1', 'joint_arm_l2', 'joint_arm_l3',
     'joint_wrist_yaw', 'joint_head_pan', 'joint_head_tilt'
@@ -29,19 +30,30 @@ JOINT_QPOS_MAP = {
 
 JOINT_LIMITS = {
     'lift': (-0.5, 0.6), 'arm_extend': (0.0, 0.52), 'wrist_yaw': (-1.75, 4.0),
-    'wrist_roll': (-3.14, 3.14), 'gripper': (-0.005, 0.04),
-    'head_pan': (-3.9, 1.5), 'head_tilt': (-1.53, 0.79)
+    'gripper': (-0.005, 0.04), 'head_pan': (-3.9, 1.5), 'head_tilt': (-1.53, 0.79)
 }
 
-ACTUATOR_NAMES = ['forward', 'turn', 'lift', 'arm_extend', 'wrist_yaw', 'wrist_roll', 
+ACTUATOR_NAMES = ['forward', 'turn', 'lift', 'arm_extend', 'wrist_yaw', 
                   'grip', 'head_pan', 'head_tilt']
 
-# Joint command mapping: (command_name, actuator_name)
 JOINT_COMMAND_MAP = [
     ('lift', 'lift'), ('arm_extend', 'arm_extend'), ('wrist_yaw', 'wrist_yaw'),
-    ('wrist_roll', 'wrist_roll'), ('gripper', 'grip'), ('head_pan', 'head_pan'),
-    ('head_tilt', 'head_tilt')
+    ('gripper', 'grip'), ('head_pan', 'head_pan'), ('head_tilt', 'head_tilt')
 ]
+
+# Reset positions: (lift_max, arm_min, wrist_mid, gripper_max)
+RESET_POSITIONS = {
+    'lift': 0.6,  # Maximum up
+    'arm_extend': 0.0,  # Fully retracted
+    'wrist_yaw': (4.0 + -1.75) / 2,  # Middle position (1.125)
+    'gripper': 0.04  # Fully open
+}
+
+# Timing constants
+PUB_RATE = 30.0  # Hz
+RENDER_RATE = 20.0  # Hz
+RESET_SPEED = 0.02  # Position change per step for smooth movement
+CAMERA_WIDTH, CAMERA_HEIGHT = 640, 480
 
 
 class StretchSimNode(Node):
@@ -54,19 +66,47 @@ class StretchSimNode(Node):
         self.model = mujoco.MjModel.from_xml_path(xml_path)
         self.data = mujoco.MjData(self.model)
         
+        self.anchors = self._load_anchors(xml_path)
+        self._init_robot_state()
+        self._init_actuators()
+        self._init_camera()
+        self._setup_ros2()
+        
+        self.nav_controller = NavigationController()
+        self.manual_control = False
+        self.running = True
+        self.sim_thread = None
+        self._nav_log_counter = 0
+        self._resetting_arm = False
+        self._reset_targets = {}
+        
+        # Joint movement targets and speed for gradual movement
+        self._joint_targets = {}  # Target positions for each actuator
+        self._joint_speed_percent = {}  # Speed percentage for each actuator (0-100)
+        self._base_joint_speed = 0.02  # Base speed for joint movement (position change per step)
+        
+        self.get_logger().info('Stretch 2 ROS 2 Simulation Node started')
+    
+    def _load_anchors(self, xml_path):
+        """Load anchors from XML file."""
         try:
-            self.anchors = load_anchors_from_xml(xml_path)
-            self.get_logger().info(f'Loaded {len(self.anchors)} anchors: {sorted(self.anchors.keys())}')
-            for letter, data in sorted(self.anchors.items()):
+            anchors = load_anchors_from_xml(xml_path)
+            self.get_logger().info(f'Loaded {len(anchors)} anchors: {sorted(anchors.keys())}')
+            for letter, data in sorted(anchors.items()):
                 self.get_logger().info(f'  {letter}: {data}')
+            return anchors
         except Exception as e:
             self.get_logger().error(f'Failed to load anchors: {e}')
-            self.anchors = {}
-        
+            return {}
+    
+    def _init_robot_state(self):
+        """Initialize robot to default state."""
         self.data.qpos[7] = 0.0  # Lift at bottom
         self.data.qpos[8:12] = 0.0  # Arm retracted
         mujoco.mj_forward(self.model, self.data)
-        
+    
+    def _init_actuators(self):
+        """Initialize actuator and joint mappings."""
         self.actuator_ids = {
             name: mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_ACTUATOR, name)
             for name in ACTUATOR_NAMES
@@ -80,23 +120,19 @@ class StretchSimNode(Node):
         }
         
         self.base_link_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, 'base_link')
-        
+    
+    def _init_camera(self):
+        """Initialize camera if available."""
         self.camera_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_CAMERA, 'camera_rgb')
         if self.camera_id < 0:
             self.get_logger().warn('Camera "camera_rgb" not found, camera display disabled')
             self.camera_id = None
+            self.camera_renderer = None
+            self.camera_obj = None
         else:
-            self.camera_width, self.camera_height = 640, 480
             self.camera_renderer = None
             self.camera_obj = None
             self.get_logger().info(f'Camera "camera_rgb" found (ID: {self.camera_id})')
-        
-        self.nav_controller = NavigationController()
-        self.manual_control = False
-        self._setup_ros2()
-        self.running = True
-        self.sim_thread = None
-        self.get_logger().info('Stretch 2 ROS 2 Simulation Node started')
     
     def _setup_ros2(self):
         """Setup ROS 2 publishers and subscribers."""
@@ -105,6 +141,12 @@ class StretchSimNode(Node):
                                 self._joint_commands_callback, 10)
         self.create_subscription(String, '/stretch/navigate_to_anchor', 
                                 self._navigate_to_anchor_callback, 10)
+        self.create_subscription(String, '/stretch/turn_towards_anchor', 
+                                self._turn_towards_anchor_callback, 10)
+        self.create_subscription(String, '/stretch/reset_arm', 
+                                self._reset_arm_callback, 10)
+        self.create_subscription(Float64MultiArray, '/stretch/navigate_to_position', 
+                                self._navigate_to_position_callback, 10)
         self.joint_state_pub = self.create_publisher(JointState, '/stretch/joint_states', 10)
         self.nav_status_pub = self.create_publisher(Bool, '/stretch/navigation_active', 10)
         self.camera_pub = self.create_publisher(Image, '/stretch/camera/image_raw', 10)
@@ -118,38 +160,218 @@ class StretchSimNode(Node):
             self.nav_controller.cancel()
             self.get_logger().info('Manual control override')
         
-        self.ctrl_state['forward'] = msg.linear.x
+        # Ensure forward is exactly 0 when turning in place (only angular velocity)
+        # This prevents pivoting around one wheel
+        linear_x = msg.linear.x
+        if abs(linear_x) < 0.001 and abs(msg.angular.z) > 0.001:
+            linear_x = 0.0
+        
+        self.ctrl_state['forward'] = linear_x
         self.ctrl_state['turn'] = msg.angular.z
     
     def _joint_commands_callback(self, msg):
-        """Handle joint position commands."""
+        """Handle joint position commands with gradual movement."""
+        if self._resetting_arm:
+            return  # Ignore manual commands during reset
+        
         if len(msg.data) < len(JOINT_COMMAND_MAP):
+            self.get_logger().warn(
+                f'Received {len(msg.data)} joint commands, expected at least {len(JOINT_COMMAND_MAP)}. Ignoring.'
+            )
             return
         
-        for (cmd_name, actuator_name), value in zip(JOINT_COMMAND_MAP, msg.data):
+        # Extract speed if provided (last element, optional)
+        speed_percent = 50.0  # Default speed
+        if len(msg.data) > len(JOINT_COMMAND_MAP):
+            speed_percent = float(msg.data[-1])
+            speed_percent = max(0.0, min(100.0, speed_percent))  # Clamp to 0-100
+        
+        # Set targets for gradual movement
+        for i, ((cmd_name, actuator_name), value) in enumerate(zip(JOINT_COMMAND_MAP, msg.data[:len(JOINT_COMMAND_MAP)])):
+            if actuator_name not in self.ctrl_state:
+                self.get_logger().warn(f'Unknown actuator: {actuator_name} at index {i}')
+                continue
             min_val, max_val = JOINT_LIMITS[cmd_name]
-            self.ctrl_state[actuator_name] = np.clip(value, min_val, max_val)
+            target_value = np.clip(value, min_val, max_val)
+            
+            # Store target and speed for gradual movement
+            self._joint_targets[actuator_name] = target_value
+            self._joint_speed_percent[actuator_name] = speed_percent
+    
+    def _reset_arm_callback(self, msg):
+        """Handle arm reset command."""
+        data = msg.data.strip()
+        if not data.lower().startswith('reset'):
+            return
+        
+        # Parse speed percentage if provided (format: "reset:50" or "reset")
+        speed_percent = 50.0  # Default
+        if ':' in data:
+            try:
+                speed_percent = float(data.split(':', 1)[1])
+                speed_percent = max(0.0, min(100.0, speed_percent))  # Clamp to 0-100
+            except ValueError:
+                self.get_logger().warn(f'Invalid speed percentage in reset command: {data}')
+        
+        self.get_logger().info(f'Starting arm reset sequence (speed: {speed_percent}%)')
+        self._resetting_arm = True
+        self._reset_speed_percent = speed_percent
+        
+        # Set target positions for reset
+        self._reset_targets = {
+            'lift': RESET_POSITIONS['lift'],
+            'arm_extend': RESET_POSITIONS['arm_extend'],
+            'wrist_yaw': RESET_POSITIONS['wrist_yaw'],
+            'grip': RESET_POSITIONS['gripper']
+        }
+    
+    def _update_arm_reset(self):
+        """Smoothly move arm to reset positions."""
+        if not self._resetting_arm:
+            return
+        
+        # Calculate speed based on percentage (0-100 maps to 0.0-2.0x base speed)
+        speed_percent = getattr(self, '_reset_speed_percent', 50.0)
+        speed_multiplier = speed_percent / 50.0  # 50% = 1.0x, 100% = 2.0x, 0% = 0.0x
+        current_reset_speed = RESET_SPEED * speed_multiplier
+        
+        all_reached = True
+        
+        for actuator_name, target in self._reset_targets.items():
+            if actuator_name not in self.ctrl_state:
+                continue
+            
+            current = self.ctrl_state[actuator_name]
+            diff = target - current
+            
+            if abs(diff) < current_reset_speed:
+                self.ctrl_state[actuator_name] = target
+            else:
+                # Move towards target at current_reset_speed
+                step = current_reset_speed if diff > 0 else -current_reset_speed
+                self.ctrl_state[actuator_name] = current + step
+                all_reached = False
+        
+        if all_reached:
+            self._resetting_arm = False
+            self.get_logger().info('✓ Arm reset complete')
+    
+    def _update_joint_movements(self):
+        """Gradually move joints towards their target positions based on speed."""
+        if not self._joint_targets:
+            return
+        
+        # Process each joint target
+        for actuator_name, target in list(self._joint_targets.items()):
+            if actuator_name not in self.ctrl_state:
+                continue
+            
+            current = self.ctrl_state[actuator_name]
+            diff = target - current
+            
+            # Check if already at target
+            if abs(diff) < 0.001:  # Small tolerance
+                self.ctrl_state[actuator_name] = target
+                # Remove from targets when reached
+                del self._joint_targets[actuator_name]
+                if actuator_name in self._joint_speed_percent:
+                    del self._joint_speed_percent[actuator_name]
+                continue
+            
+            # Calculate speed based on percentage (0-100 maps to 0.0-2.0x base speed)
+            speed_percent = self._joint_speed_percent.get(actuator_name, 50.0)
+            speed_multiplier = speed_percent / 50.0  # 50% = 1.0x, 100% = 2.0x, 0% = 0.0x
+            current_speed = self._base_joint_speed * speed_multiplier
+            
+            # Move towards target
+            if abs(diff) < current_speed:
+                self.ctrl_state[actuator_name] = target
+                # Remove from targets when reached
+                del self._joint_targets[actuator_name]
+                if actuator_name in self._joint_speed_percent:
+                    del self._joint_speed_percent[actuator_name]
+            else:
+                # Move towards target at current_speed
+                step = current_speed if diff > 0 else -current_speed
+                self.ctrl_state[actuator_name] = current + step
     
     def _navigate_to_anchor_callback(self, msg):
         """Handle navigate to anchor command."""
         anchor_key = msg.data.strip().upper()
-        if anchor_key in self.anchors:
-            anchor_data = self.anchors[anchor_key]
-            target_pos = anchor_data['pos']
-            target_direction = anchor_data.get('direction')
-            
-            current_pos, _ = self._get_robot_pose()
-            distance = np.linalg.norm(np.array(target_pos[:2]) - current_pos[:2])
-            
-            self.nav_controller.set_target(target_pos, target_direction)
-            self.manual_control = False
-            
-            direction_info = f", direction={math.degrees(target_direction):.1f}°" if target_direction else ""
-            self.get_logger().info(f'Navigating to anchor {anchor_key} at {target_pos} '
-                                 f'(distance: {distance:.2f}m{direction_info})')
-        else:
+        if anchor_key not in self.anchors:
             available = ', '.join(sorted(self.anchors.keys())) if self.anchors else 'none'
             self.get_logger().warn(f'Unknown anchor: {anchor_key}. Available: {available}')
+            return
+        
+        anchor_data = self.anchors[anchor_key]
+        target_pos = anchor_data['pos']
+        target_direction = anchor_data.get('direction')
+        
+        current_pos, _ = self._get_robot_pose()
+        distance = np.linalg.norm(np.array(target_pos[:2]) - current_pos[:2])
+        
+        self.nav_controller.set_target(target_pos, target_direction)
+        self.manual_control = False
+        
+        direction_info = f", direction={math.degrees(target_direction):.1f}°" if target_direction else ""
+        self.get_logger().info(
+            f'Navigating to anchor {anchor_key} at {target_pos} '
+            f'(distance: {distance:.2f}m{direction_info})'
+        )
+    
+    def _turn_towards_anchor_callback(self, msg):
+        """Handle turn towards anchor command (rotation only, no movement)."""
+        anchor_key = msg.data.strip().upper()
+        if anchor_key not in self.anchors:
+            available = ', '.join(sorted(self.anchors.keys())) if self.anchors else 'none'
+            self.get_logger().warn(f'Unknown anchor: {anchor_key}. Available: {available}')
+            return
+        
+        anchor_data = self.anchors[anchor_key]
+        target_pos = anchor_data['pos']
+        
+        current_pos, current_quat = self._get_robot_pose()
+        distance = np.linalg.norm(np.array(target_pos[:2]) - current_pos[:2])
+        
+        # Calculate desired angle to target
+        diff = np.array(target_pos[:2]) - current_pos[:2]
+        desired_angle = math.atan2(diff[1], diff[0])
+        
+        # Use turn-only mode (no linear movement)
+        self.nav_controller.set_turn_only_target(target_pos)
+        self.manual_control = False
+        
+        self.get_logger().info(
+            f'Turning towards anchor {anchor_key} at {target_pos} '
+            f'(distance: {distance:.2f}m, target angle: {math.degrees(desired_angle):.1f}°)'
+        )
+    
+    def _navigate_to_position_callback(self, msg):
+        """Handle navigate to position command."""
+        if len(msg.data) < 2:
+            self.get_logger().warn('Position command requires at least x and y coordinates')
+            return
+        
+        x, y = float(msg.data[0]), float(msg.data[1])
+        target_pos = [x, y, 0.0]  # Z is typically 0 for ground navigation
+        target_direction = float(msg.data[2]) if len(msg.data) > 2 else None
+        speed_percent = float(msg.data[3]) if len(msg.data) > 3 else 50.0
+        speed_percent = max(0.0, min(100.0, speed_percent))  # Clamp to 0-100
+        
+        current_pos, _ = self._get_robot_pose()
+        distance = np.linalg.norm(np.array(target_pos[:2]) - current_pos[:2])
+        
+        self.nav_controller.set_target(target_pos, target_direction)
+        self.manual_control = False
+        
+        # Store speed percentage for navigation (would affect MAX_LINEAR_VEL in navigation controller)
+        # For now, we log it but navigation uses default speed
+        direction_info = f", direction={math.degrees(target_direction):.1f}°" if target_direction else ""
+        speed_info = f", speed={speed_percent}%" if speed_percent != 50.0 else ""
+        self.get_logger().info(
+            f'Navigating to position ({x}, {y}) '
+            f'(distance: {distance:.2f}m{direction_info}{speed_info})'
+        )
     
     def _get_robot_pose(self):
         """Get current robot position and orientation."""
@@ -164,17 +386,22 @@ class StretchSimNode(Node):
         distance = np.linalg.norm(target - pos[:2])
         diff = target - pos[:2]
         desired_angle = np.arctan2(diff[1], diff[0])
+        
         w, x, y, z = quat
         current_yaw = np.arctan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
-        angle_error = np.arctan2(np.sin(desired_angle - current_yaw),
-                                np.cos(desired_angle - current_yaw))
+        angle_error = np.arctan2(
+            np.sin(desired_angle - current_yaw),
+            np.cos(desired_angle - current_yaw)
+        )
         angle_error_deg = np.degrees(abs(angle_error))
         aligned = angle_error_deg <= 10.0
         actual_ctrl = self.ctrl_state.get('forward', 0.0)
         
-        self.get_logger().info(f'Nav: dist={distance:.2f}m, lin={linear_vel:.2f} m/s, '
-                             f'ctrl={actual_ctrl:.3f}, ang={angular_vel:.2f}, '
-                             f'err={angle_error_deg:.1f}°, aligned={aligned}')
+        self.get_logger().info(
+            f'Nav: dist={distance:.2f}m, lin={linear_vel:.2f} m/s, '
+            f'ctrl={actual_ctrl:.3f}, ang={angular_vel:.2f}, '
+            f'err={angle_error_deg:.1f}°, aligned={aligned}'
+        )
     
     def _update_navigation(self):
         """Update navigation controller and apply its commands."""
@@ -188,9 +415,14 @@ class StretchSimNode(Node):
         pos, quat = self._get_robot_pose()
         linear_vel, angular_vel = self.nav_controller.get_control(pos, quat)
         
-        self._nav_log_counter = getattr(self, '_nav_log_counter', 0) + 1
+        self._nav_log_counter += 1
         if self._nav_log_counter % (10 if abs(linear_vel) > 0.01 else 50) == 0:
             self._log_navigation_status(pos, quat, linear_vel, angular_vel)
+        
+        # Ensure forward is exactly 0 when turning in place (only angular velocity)
+        # This prevents pivoting around one wheel
+        if abs(linear_vel) < 0.001 and abs(angular_vel) > 0.001:
+            linear_vel = 0.0
         
         self.ctrl_state['forward'] = linear_vel
         self.ctrl_state['turn'] = angular_vel
@@ -205,8 +437,10 @@ class StretchSimNode(Node):
         if joint_name in JOINT_QPOS_MAP:
             idx = JOINT_QPOS_MAP[joint_name]
             if idx < len(self.data.qpos):
-                return (float(self.data.qpos[idx]), 
-                       float(self.data.qvel[idx]) if idx < len(self.data.qvel) else 0.0)
+                return (
+                    float(self.data.qpos[idx]),
+                    float(self.data.qvel[idx]) if idx < len(self.data.qvel) else 0.0
+                )
         
         if joint_name in self.joint_ids:
             try:
@@ -255,48 +489,60 @@ class StretchSimNode(Node):
             img_msg = Image()
             img_msg.header.stamp = self.get_clock().now().to_msg()
             img_msg.header.frame_id = 'camera_rgb'
-            img_msg.height = self.camera_height
-            img_msg.width = self.camera_width
+            img_msg.height = CAMERA_HEIGHT
+            img_msg.width = CAMERA_WIDTH
             img_msg.encoding = 'rgb8'
             img_msg.is_bigendian = False
-            img_msg.step = self.camera_width * 3
+            img_msg.step = CAMERA_WIDTH * 3
             img_msg.data = camera_rgb.tobytes()
             self.camera_pub.publish(img_msg)
         except Exception as e:
             self.get_logger().warn(f'Camera rendering error: {e}')
     
+    def _init_camera_rendering(self):
+        """Initialize camera rendering components."""
+        if self.camera_id is None:
+            return
+        
+        try:
+            self.camera_renderer = mujoco.Renderer(
+                self.model, height=CAMERA_HEIGHT, width=CAMERA_WIDTH
+            )
+            self.camera_renderer.scene.flags[mujoco.mjtRndFlag.mjRND_SHADOW] = True
+            self.camera_renderer.scene.flags[mujoco.mjtRndFlag.mjRND_REFLECTION] = True
+            self.camera_obj = mujoco.MjvCamera()
+            self.camera_obj.type = mujoco.mjtCamera.mjCAMERA_FIXED
+            self.camera_obj.fixedcamid = self.camera_id
+            cv2.namedWindow('Robot Camera', cv2.WINDOW_NORMAL)
+            cv2.resizeWindow('Robot Camera', CAMERA_HEIGHT, CAMERA_WIDTH)
+            self.get_logger().info('Camera rendering initialized')
+        except Exception as e:
+            self.get_logger().error(f'Failed to initialize camera rendering: {e}')
+            self.camera_id = None
+    
     def run_simulation(self):
         """Run the MuJoCo simulation loop."""
-        #with mujoco.viewer.launch_passive(self.model, self.data) as viewer:
-        with mujoco.viewer.launch_passive(self.model, self.data, show_left_ui=False, show_right_ui=False) as viewer:
+        with mujoco.viewer.launch_passive(
+            self.model, self.data, show_left_ui=False, show_right_ui=False
+        ) as viewer:
             viewer.cam.lookat[:] = [0, 3, 1]
             viewer.cam.distance = 5
             viewer.cam.elevation = -20
             viewer.cam.azimuth = 90
             
-            if self.camera_id is not None:
-                try:
-                    self.camera_renderer = mujoco.Renderer(self.model, 
-                                                          height=self.camera_height, 
-                                                          width=self.camera_width)
-                    self.camera_renderer.scene.flags[mujoco.mjtRndFlag.mjRND_SHADOW] = True
-                    self.camera_renderer.scene.flags[mujoco.mjtRndFlag.mjRND_REFLECTION] = True
-                    self.camera_obj = mujoco.MjvCamera()
-                    self.camera_obj.type = mujoco.mjtCamera.mjCAMERA_FIXED
-                    self.camera_obj.fixedcamid = self.camera_id
-                    cv2.namedWindow('Robot Camera', cv2.WINDOW_NORMAL)
-                    cv2.resizeWindow('Robot Camera', self.camera_height, self.camera_width)
-                    self.get_logger().info('Camera rendering initialized')
-                except Exception as e:
-                    self.get_logger().error(f'Failed to initialize camera rendering: {e}')
-                    self.camera_id = None
+            self._init_camera_rendering()
             
             prev_render_time = prev_pub_time = prev_camera_time = time.time()
+            pub_interval = 1.0 / PUB_RATE
+            render_interval = 1.0 / RENDER_RATE
+            camera_interval = 1.0 / PUB_RATE
             
             while self.running and viewer.is_running():
                 step_start = time.time()
                 
                 self._update_navigation()
+                self._update_arm_reset()
+                self._update_joint_movements()
                 
                 for name, actuator_id in self.actuator_ids.items():
                     self.data.ctrl[actuator_id] = self.ctrl_state[name]
@@ -304,15 +550,15 @@ class StretchSimNode(Node):
                 mujoco.mj_step(self.model, self.data)
                 
                 now = time.time()
-                if now - prev_pub_time > 1.0/30.0:
+                if now - prev_pub_time > pub_interval:
                     self.publish_joint_states()
                     prev_pub_time = now
                 
-                if now - prev_camera_time > 1.0/30.0:
+                if now - prev_camera_time > camera_interval:
                     self._render_camera()
                     prev_camera_time = now
                 
-                if now - prev_render_time > 1.0/20.0:
+                if now - prev_render_time > render_interval:
                     viewer.sync()
                     prev_render_time = now
                 

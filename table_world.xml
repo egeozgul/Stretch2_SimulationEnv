@@ -16,11 +16,10 @@
     <mesh name="cutting_board" file="../meshes/cutting_board.stl" scale="0.01 0.01 0.01"/>
     <material name="cutting_board_mat" rgba="0.5 0.3 0.2 1"/>
     <material name="cutting_board_white_mat" rgba="0.95 0.95 0.95 1"/>
+    <mesh name="knife" file="../meshes/knife.stl" scale="0.00357 0.00357 0.00357"/>
+    <material name="knife_mat" rgba="0.6 0.6 0.65 1" specular="0.8" shininess="0.3" reflectance="0.5"/>
     <mesh name="delivery_area" file="../meshes/delivery_area.stl" scale="0.01 0.01 0.01"/>
     <mesh name="plate" file="../meshes/plate.stl" scale="0.01 0.01 0.01"/>
-    <mesh name="bell" file="../meshes/bell.obj" />
-    <texture name="bell_tex" type="2d" file="../textures/Material.001_baseColor.png"/>
-    <material name="bell_mat" texture="bell_tex"/>
     <mesh name="table" file="../meshes/table_fixed.obj" scale="1 1 0.55"/>
     <texture name="table_tex" type="2d" file="../textures/Material.001_baseColor.png"/>
     <material name="table_mat" texture="table_tex"/>
@@ -42,23 +41,26 @@
   </asset>
   <include file="stretch.xml"/>
   <worldbody>
-    <site name="anchor_A" pos="-0.65 1 0.00" size="0.15" rgba="0 1 0 0.5" type="sphere"/>
+    <site name="anchor_A" pos="-0.65 1.1 0.00" size="0.075" rgba="0 1 0 0.5" type="sphere"/>
     <!-- anchor_A direction="0" -->
     
-    <site name="anchor_B" pos="0.65 1 0.00" size="0.15" rgba="1 0 0 0.5" type="sphere"/>
+    <site name="anchor_B" pos="0.65 1.1 0.00" size="0.075" rgba="1 0 0 0.5" type="sphere"/>
     <!-- anchor_B direction="0" -->
 
-    <site name="anchor_C" pos="-0.65 3.5 0.00" size="0.15" rgba="1 0 0 0.5" type="sphere"/>
+    <site name="anchor_C" pos="-0.65 3.6 0.00" size="0.075" rgba="1 0 0 0.5" type="sphere"/>
     <!-- anchor_C direction="180" -->
 
-    <site name="anchor_D" pos="0.65 3.5 0.00" size="0.15" rgba="1 0 0 0.5" type="sphere"/>
+    <site name="anchor_D" pos="0.65 3.6 0.00" size="0.075" rgba="1 0 0 0.5" type="sphere"/>
     <!-- anchor_D direction="180" -->
 
-    <site name="anchor_E" pos="1.5 2.9 0.00" size="0.15" rgba="0 0 1 0.5" type="sphere"/>
+    <site name="anchor_E" pos="1.6 2.9 0.00" size="0.075" rgba="0 0 1 0.5" type="sphere"/>
     <!-- anchor_E direction="90" -->
     
-    <site name="anchor_F" pos="1.5 1.6 0.00" size="0.15" rgba="0 0 1 0.5" type="sphere"/>
+    <site name="anchor_F" pos="1.6 1.6 0.00" size="0.075" rgba="0 0 1 0.5" type="sphere"/>
     <!-- anchor_F direction="90" -->
+    
+    <site name="anchor_ORIGIN" pos="0.533 2.317 0.00" size="0.075" rgba="1 1 0 0.5" type="sphere"/>
+    <!-- anchor_ORIGIN direction="0" -->
 
     <!-- Lighting for large space -->
     <light directional="true" diffuse="0.8 0.8 0.8" specular="0.3 0.3 0.3" pos="0 0 10" dir="0 0 -1" castshadow="true"/>
@@ -82,20 +84,26 @@
     </body>
 
     <!-- table 1 elements-->
-    <!-- Lettuce cluster (left side of table 1) -->
-    <body name="lettuce1" pos="-0.65 0.4 0.65">
+    <!-- Lettuce cluster (left side of table 1) - rotated 90 degrees around Z-axis -->
+    <body name="lettuce1" pos="-0.43 0.7 0.65">
       <joint type="free" damping="0.05"/>
       <geom name="lettuce1_geom" type="mesh" mesh="lettuce" material="lettuce_mat" mass="0.15" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
     
-    <body name="lettuce2" pos="-0.65 0.5 0.65">
+    <body name="lettuce2" pos="-0.65 0.7 0.65">
       <joint type="free" damping="0.05"/>
       <geom name="lettuce2_geom" type="mesh" mesh="lettuce" material="lettuce_mat" mass="0.15" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
     
-    <body name="lettuce3" pos="-0.65 0.6 0.65">
+    <body name="lettuce3" pos="-0.87 0.7 0.65">
       <joint type="free" damping="0.05"/>
       <geom name="lettuce3_geom" type="mesh" mesh="lettuce" material="lettuce_mat" mass="0.15" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+    </body>
+
+    <!-- Knife in the middle of table 1 -->
+    <body name="knife1" pos="0 0 0.65">
+      <joint type="free" damping="0.01"/>
+      <geom name="knife1_geom" type="mesh" mesh="knife" material="knife_mat" mass="0.2" friction="0.8 0.5 0.5"/>
     </body>
 
     <!-- Cutting board (right side of table 1) -->
@@ -106,57 +114,37 @@
 
     
     <!-- table 2 elements-->
-    <!-- Onion cluster (left side of table 2) -->
-    <body name="onion1" pos="-0.65 4.4 0.65">
+    <!-- Onion cluster (left side of table 2) - rotated 90 degrees around Z-axis -->
+    <body name="onion1" pos="-0.43 4.1 0.65">
       <joint type="free" damping="0.05"/>
       <geom name="onion1_geom" type="mesh" mesh="onion" material="onion_mat" mass="0.15" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
     
-    <body name="onion2" pos="-0.65 4.5 0.65">
+    <body name="onion2" pos="-0.65 4.1 0.65">
       <joint type="free" damping="0.05"/>
       <geom name="onion2_geom" type="mesh" mesh="onion" material="onion_mat" mass="0.15" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
     
-    <body name="onion3" pos="-0.65 4.6 0.65">
+    <body name="onion3" pos="-0.87 4.1 0.65">
       <joint type="free" damping="0.05"/>
       <geom name="onion3_geom" type="mesh" mesh="onion" material="onion_mat" mass="0.15" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
 
-    <!-- Tomato cluster (right side of table 2) -->
-    <body name="tomato1" pos="0.65 4.4 0.65">
+    <!-- Tomato cluster (right side of table 2) - rotated 90 degrees around Z-axis -->
+    <body name="tomato1" pos="0.43 4.1 0.65">
       <joint type="free" damping="0.05"/>
       <geom name="tomato1_geom" type="mesh" mesh="tomato" material="tomato_mat" mass="0.13" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
     
-    <body name="tomato2" pos="0.65 4.5 0.65">
+    <body name="tomato2" pos="0.65 4.1 0.65">
       <joint type="free" damping="0.05"/>
       <geom name="tomato2_geom" type="mesh" mesh="tomato" material="tomato_mat" mass="0.13" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
     
-    <body name="tomato3" pos="0.65 4.6 0.65">
+    <body name="tomato3" pos="0.87 4.1 0.65">
       <joint type="free" damping="0.05"/>
       <geom name="tomato3_geom" type="mesh" mesh="tomato" material="tomato_mat" mass="0.13" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
-
-
-    <body name="bell1" pos="-0.1 3.92 1.02">
-      <joint type="free" damping="0.001"/>
-      <geom name="bell1_geom" type="mesh" mesh="bell" material="bell_mat" mass="0.11" friction="1.5 0.8 0.8"/>
-      <site name="bell1_site" size="0.01" rgba="0 1 0 1"/>
-    </body>
-
-    <body name="bell2" pos="0.1 3.92 1.02">
-      <joint type="free" damping="0.001"/>
-      <geom name="bell2_geom" type="mesh" mesh="bell" material="bell_mat" mass="0.11" friction="1.5 0.8 0.8"/>
-      <site name="bell2_site" size="0.01" rgba="0 1 0 1"/>
-    </body>
-
-    <body name="bell3" pos="-0.1 4.04 1.02">
-      <joint type="free" damping="0.001"/>
-      <geom name="bell3_geom" type="mesh" mesh="bell" material="bell_mat" mass="0.11" friction="1.5 0.8 0.8"/>
-      <site name="bell3_site" size="0.01" rgba="0 1 0 1"/>
-    </body>
-
 
     <body name="table2" pos="0 4.5 0">
       <geom name="table2_geom" type="mesh" mesh="table" material="table_mat" friction="0.8 0.5 0.5"/>
@@ -168,17 +156,17 @@
     </body>
     
     <!-- Plate cluster -->
-    <body name="plate1" pos="2.4 2.5 0.65">
+    <body name="plate1" pos="2.35 2.5 0.65">
       <joint type="free" damping="0.01"/>
       <geom name="plate1_geom" type="mesh" mesh="plate" mass="0.1"friction="0.6 0.4 0.4" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
     
-    <body name="plate2" pos="2.4 2.9 0.65">
+    <body name="plate2" pos="2.35 2.9 0.65">
       <joint type="free" damping="0.01"/>
       <geom name="plate2_geom" type="mesh" mesh="plate" mass="0.1"friction="0.6 0.4 0.4" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
     
-    <body name="plate3" pos="2.4 3.3 0.65">
+    <body name="plate3" pos="2.35 3.3 0.65">
       <joint type="free" damping="0.01"/>
       <geom name="plate3_geom" type="mesh" mesh="plate" mass="0.1"friction="0.6 0.4 0.4" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>

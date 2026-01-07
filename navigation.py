@@ -33,6 +33,15 @@ class NavigationController:
         self._was_aligned = False
         self._position_reached = False
     
+    def set_turn_only_target(self, target_pos):
+        """Set target position for turning only (no movement)."""
+        self.target_pos = np.array(target_pos[:2])
+        self.target_direction = None  # Will be calculated from target_pos
+        self.active = True
+        self.reached = False
+        self._was_aligned = False
+        self._position_reached = True  # Mark position as reached so we only rotate
+    
     @staticmethod
     def _normalize_angle(angle):
         """Normalize angle to [-π, π] range."""
@@ -90,9 +99,16 @@ class NavigationController:
                 self._was_aligned = False
                 linear_vel = 0.0
         
-        # Phase 2: Rotate to target direction
-        elif self.target_direction is not None:
-            angle_error = self._calculate_angle_error(self.target_direction, current_yaw)
+        # Phase 2: Rotate to target direction (or turn towards target position if turn-only)
+        elif self._position_reached:
+            # If turn-only mode, calculate desired angle to target position
+            if self.target_direction is None:
+                diff = self.target_pos - np.array(current_pos[:2])
+                desired_angle = math.atan2(diff[1], diff[0])
+            else:
+                desired_angle = self.target_direction
+            
+            angle_error = self._calculate_angle_error(desired_angle, current_yaw)
             angle_error_abs = abs(angle_error)
             
             angular_vel = np.clip(-K_P_ANGULAR * angle_error, -MAX_ANGULAR_VEL, MAX_ANGULAR_VEL)

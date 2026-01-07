@@ -44,11 +44,9 @@ def check_files():
     required_files = [
         'table_world.xml',
         'stretch.xml',
-        'teleop.py',
         'meshes/table_fixed.obj',
         'meshes/tomato.obj',
         'meshes/onion.obj',
-        'meshes/bell.obj',
         'meshes/plate.obj',
     ]
     
@@ -105,7 +103,7 @@ def main():
     print("=" * 60)
     if all(results):
         print("✅ All checks passed! Your environment is ready.")
-        print("   You can now run: python teleop.py")
+        print("   You can now run: python stretch_ros2_sim.py")
     else:
         print("❌ Some checks failed. Please fix the issues above.")
         sys.exit(1)
