@@ -4,6 +4,16 @@ A high-fidelity MuJoCo-based simulation environment for the **Hello Robot Stretc
 
 ![Simulation Screenshot](media/screenshot.png)
 
+## Purpose
+
+This simulation environment models a kitchen workspace designed for testing custom Reinforcement Learning models. The environment includes:
+
+- **Kitchen Objects**: Knife, cutting board, plates
+- **Pickable Ingredients**: Spherical colored objects representing lettuce (green), onion (white), and tomato (red)
+- **Robot Compatibility**: All objects are specifically designed to be pickable by the Stretch 2 robot's gripper
+
+The primary goal of this kitchen model is to test and validate custom Reinforcement Learning algorithms, specifically the [Macro MARL PPO](https://github.com/wwlin1198/macro_marl_ppo) model developed at Northeastern Laboratory.
+
 ## Features
 
 - **Physics Simulation** - MuJoCo-based realistic robot dynamics
