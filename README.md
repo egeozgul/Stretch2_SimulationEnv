@@ -2,6 +2,8 @@
 
 A high-fidelity MuJoCo-based simulation environment for the **Hello Robot Stretch 2** platform with ROS 2 integration and interactive control.
 
+![Simulation Screenshot](media/screenshot.png)
+
 ## ✨ Features
 
 - **Physics Simulation** - MuJoCo-based realistic robot dynamics
