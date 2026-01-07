@@ -2,322 +2,248 @@
 
 Complete guide for using the Stretch 2 Simulation Environment.
 
-## Quick Start
+## 🚀 Quick Start
 
-### Regular Simulation (No ROS 2)
+### Running the Simulation
 
-**Teleoperation (Interactive Control)**
-```bash
-conda activate simenv
-python teleop.py
-```
-
-**View World**
-```bash
-conda activate simenv
-python view_world.py
-```
-
-**Check Mesh Properties**
-```bash
-conda activate simenv
-python checkmesh.py
-```
-
-### ROS 2 Simulation
-
-**Start the Simulation Node**
-```bash
-# Option 1: Use wrapper script
-./run_ros2_sim.sh
-
-# Option 2: Manual
-conda activate simenv_ros2
-source /opt/ros/jazzy/setup.bash
-python stretch_ros2_sim.py
-```
-
-**Use Keyboard Controller**
-```bash
-conda activate simenv_ros2
-source /opt/ros/jazzy/setup.bash
-python stretch_keyboard_controller.py
-```
-
-## Keyboard Controls
-
-### Base Movement
-- **W/S** - Move forward/backward
-- **A/D** - Turn left/right
-- **1/2/3/4** - Navigate to anchors (A, B, C, D)
-
-### Arm & Gripper
-- **Q/E** - Lift up/down
-- **R/F** - Arm extend/retract
-- **T/G** - Wrist yaw rotate
-- **V/B** - Wrist roll rotate
-- **Z/X** - Gripper open/close
-
-### Camera/Head
-- **Arrow Keys** - Pan/tilt head
-
-### General
-- **ESC** - Exit
-
-## ROS 2 Communication
-
-### Running ROS 2 Simulation
-
-**Terminal 1: Start the Simulation Node**
+**Terminal 1: Start Simulation Node**
 ```bash
 conda activate simenv_ros2
 source /opt/ros/jazzy/setup.bash
 python stretch_ros2_sim.py
 ```
 
-This will:
-- Load the MuJoCo simulation
-- Open the MuJoCo viewer
-- Start listening for ROS 2 commands
-- Publish joint states and camera feed
+**Terminal 2: Interactive Controller (Recommended)**
+```bash
+conda activate simenv_ros2
+source /opt/ros/jazzy/setup.bash
+python interactive_controller.py
+```
 
-**Terminal 2: Send Commands**
-
-**Option A: Keyboard Controller (Recommended)**
+**Terminal 2: Keyboard Controller (Alternative)**
 ```bash
 conda activate simenv_ros2
 source /opt/ros/jazzy/setup.bash
 python stretch_keyboard_controller.py
 ```
 
-**Option B: ROS 2 Command Line**
+## 🎮 Interactive Controller
+
+The interactive controller provides a modern command-line interface with action-based control.
+
+### Getting Started
+
 ```bash
-source /opt/ros/jazzy/setup.bash
-
-# Move forward
-ros2 topic pub --once /stretch/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 1.0}}"
-
-# Turn left
-ros2 topic pub --once /stretch/cmd_vel geometry_msgs/msg/Twist "{angular: {z: 0.5}}"
-
-# Stop
-ros2 topic pub --once /stretch/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.0}, angular: {z: 0.0}}"
-
-# Send joint command (lift up)
-ros2 topic pub --once /stretch/joint_commands std_msgs/msg/Float64MultiArray "{data: [0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}"
-
-# Navigate to Anchor A
-ros2 topic pub --once /stretch/navigate_to_anchor std_msgs/msg/String "{data: 'A'}"
+python interactive_controller.py
 ```
 
-**Option C: Monitor Topics**
+You'll see a welcome screen with all available actions. Use:
+- `help` - Show all actions
+- `help <action_name>` - Show details for specific action
+- `list` - List all actions
+- `exit` or `quit` - Exit controller
+
+### Command Examples
+
 ```bash
-source /opt/ros/jazzy/setup.bash
+# Navigation
+stretch> go_to_anchor anchor=A speed=0.5
+stretch> turn_towards anchor=ORIGIN
+stretch> go_to_position x=0.5 y=0.5
 
-# List all topics
-ros2 topic list
+# Arm Control
+stretch> reset_arm speed=0.3
+stretch> elevate_arm height=0.5 speed=0.5
+stretch> extend_arm length=0.7
+stretch> rotate_wrist angle=0.5
+stretch> open_gripper
 
-# Monitor joint states
-ros2 topic echo /stretch/joint_states
-
-# Check topic info
-ros2 topic info /stretch/cmd_vel
+# Utility
+stretch> wait duration=2.0
+stretch> wait_for_arm timeout=5.0
 ```
 
-## Navigation System
+### Features
+
+- **Command History** - Use ↑/↓ arrow keys to navigate previous commands
+- **Tab Completion** - Press Tab to autocomplete action names
+- **Normalized Parameters** - All parameters use 0-1 range (0=min, 0.5=middle, 1=max)
+- **Speed Control** - Optional speed parameter for all movements (default: 0.5)
+
+## ⌨️ Keyboard Controller
+
+Alternative control method using keyboard shortcuts.
+
+### Controls
+
+**Base Movement**
+- `W/S` - Move forward/backward
+- `A/D` - Turn left/right
+- `1-6` - Navigate to anchors (A-F)
+
+**Arm & Gripper**
+- `Q/E` - Lift up/down
+- `R/F` - Arm extend/retract
+- `T/G` - Wrist yaw rotate
+- `Z/X` - Gripper open/close
+
+**Head**
+- `Arrow Keys` - Pan/tilt head
+
+**General**
+- `0` - Reset arm
+- `ESC` - Exit
+
+## 🧭 Navigation System
 
 ### Overview
 
-The navigation system allows the Stretch 2 robot to autonomously move to anchor positions (A, B, C, D) defined in the world.
+The navigation system uses a proportional controller to autonomously navigate to target positions.
 
 ### How It Works
 
-The `NavigationController` class implements a proportional controller:
+1. **Calculate Target** - Compute distance and direction to target
+2. **Align Orientation** - Turn robot to face target (if needed)
+3. **Move Forward** - Move forward while maintaining alignment
+4. **Final Alignment** - Rotate to target direction (if specified)
+5. **Arrival** - Stop when within tolerance (0.15m)
 
-1. **Position Calculation**: Computes distance and direction to target
-2. **Orientation Control**: First turns robot to face the target
-3. **Forward Movement**: Moves forward once aligned
-4. **Direction Alignment**: Rotates to target direction if specified
-5. **Arrival Detection**: Stops when within tolerance (0.15m)
+### Navigation Commands
 
-### Control Strategy
-
-```
-1. Calculate distance and angle to target
-2. If angle error > 45°:
-   → Turn towards target (angular velocity only)
-3. If angle error < 45°:
-   → Move forward + small angular correction
-4. If distance < tolerance:
-   → Stop and rotate to target direction (if specified)
-5. If direction aligned:
-   → Mark as reached
-```
-
-### Parameters
-
-Located in `navigation.py`:
-- `POSITION_TOLERANCE = 0.15` meters - Stop distance from target
-- `ALIGNMENT_THRESHOLD = 15°` - Alignment threshold before moving
-- `MAX_ANGLE_FOR_MOVEMENT = 45°` - Maximum angle error to allow forward movement
-- `DIRECTION_TOLERANCE = 5°` - Tolerance for final direction alignment
-- `MAX_LINEAR_VEL = 2.5` m/s - Maximum forward speed
-- `MAX_ANGULAR_VEL = 2.0` rad/s - Maximum turning speed
-- `K_P_ANGULAR = 2.0` - Proportional gain for angular velocity
-
-### Usage
-
-**Via Keyboard Controller**
+**Via Interactive Controller**
 ```bash
-python stretch_keyboard_controller.py
-# Press 1, 2, 3, or 4 to navigate to respective anchor
+stretch> go_to_anchor anchor=A
+stretch> turn_towards anchor=ORIGIN
+stretch> go_to_position x=0.5 y=0.5 speed=0.7
 ```
 
-**Via ROS 2 Topic**
+**Via ROS 2 Topics**
 ```bash
-# Navigate to Anchor A
+# Navigate to anchor
 ros2 topic pub --once /stretch/navigate_to_anchor std_msgs/msg/String "{data: 'A'}"
 
-# Navigate to Anchor B
-ros2 topic pub --once /stretch/navigate_to_anchor std_msgs/msg/String "{data: 'B'}"
+# Turn towards anchor
+ros2 topic pub --once /stretch/turn_towards_anchor std_msgs/msg/String "{data: 'ORIGIN'}"
+
+# Navigate to position
+ros2 topic pub --once /stretch/navigate_to_position std_msgs/msg/Float64MultiArray "{data: [0.5, 0.5, 50.0]}"
 ```
 
-**Check Navigation Status**
-```bash
-# Check if navigation is active
-ros2 topic echo /stretch/navigation_active
-```
+### Anchors
+
+Predefined navigation points:
+- **A, B, C, D, E, F** - Table positions
+- **ORIGIN** - Center point (average of all anchors)
+
+Anchor positions are defined in `table_world.xml`.
 
 ### Manual Override
 
 Manual velocity commands automatically cancel navigation:
 ```bash
-# This will cancel navigation and use manual control
 ros2 topic pub /stretch/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.5}}"
 ```
 
-### Anchor Positions
+## 🤖 Arm Control
 
-Anchors are defined in `table_world.xml`:
-- **Anchor A**: Position (-0.65, 1.0, 0.0) - Green sphere
-- **Anchor B**: Position (0.65, 1.0, 0.0) - Red sphere  
-- **Anchor C**: Position (-1.0, 5.0, 0.0) - Red sphere
-- **Anchor D**: Position (1.0, 5.0, 0.0) - Red sphere
+### Normalized Parameters
 
-Each anchor can have an optional `direction` attribute (in degrees) that the robot will align to after reaching the position.
+All arm control parameters use a 0-1 normalized range:
+- **0.0** = Minimum value
+- **0.5** = Middle/default value
+- **1.0** = Maximum value
 
-### Coordinate System
+The system automatically maps these to actual joint ranges.
 
-- **X-axis**: Forward/backward (positive = forward)
-- **Y-axis**: Left/right (positive = left)
-- **Z-axis**: Up/down (positive = up)
-- **Yaw**: Rotation around Z-axis (0 = facing +X direction)
+### Examples
 
-## Testing
+```bash
+# Reset arm (all joints to default)
+stretch> reset_arm speed=0.3
 
-### Quick Test Script
+# Elevate to middle height
+stretch> elevate_arm height=0.5
 
-Run the automated test script:
+# Extend arm to 75% of maximum
+stretch> extend_arm length=0.75
+
+# Rotate wrist to middle position
+stretch> rotate_wrist angle=0.5
+
+# Set gripper to half-open
+stretch> set_gripper width=0.5
+```
+
+### Speed Control
+
+All movements support optional speed control (0-1 range):
+- `speed=0.0` - Very slow
+- `speed=0.5` - Normal (default)
+- `speed=1.0` - Maximum speed
+
+## 🧪 Testing
+
+### Quick Test
+
 ```bash
 conda activate simenv_ros2
 source /opt/ros/jazzy/setup.bash
 python test_ros2_communication.py
 ```
 
-This will:
-- ✓ Check ROS 2 imports
-- ✓ Test topic creation
-- ✓ Send test commands (optional)
+### Manual Testing
 
-### Manual Testing Steps
-
-**1. Start the Simulation Node**
+**1. Verify Topics**
 ```bash
-conda activate simenv_ros2
-source /opt/ros/jazzy/setup.bash
-python stretch_ros2_sim.py
-```
-
-**2. Verify Topics are Available**
-```bash
-source /opt/ros/jazzy/setup.bash
 ros2 topic list
 ```
 
-**3. Test Base Velocity Commands**
+**2. Test Base Movement**
 ```bash
-# Move forward
 ros2 topic pub --once /stretch/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 1.0}}"
-
-# Turn left
-ros2 topic pub --once /stretch/cmd_vel geometry_msgs/msg/Twist "{angular: {z: 0.5}}"
-
-# Stop
-ros2 topic pub --once /stretch/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.0}, angular: {z: 0.0}}"
 ```
 
-**4. Test Joint Commands**
+**3. Test Joint Commands**
 ```bash
-# Lift up
-ros2 topic pub --once /stretch/joint_commands std_msgs/msg/Float64MultiArray "{data: [0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}"
-
-# Extend arm
-ros2 topic pub --once /stretch/joint_commands std_msgs/msg/Float64MultiArray "{data: [0.0, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0]}"
+ros2 topic pub --once /stretch/joint_commands std_msgs/msg/Float64MultiArray "{data: [0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 50.0]}"
 ```
 
-**5. Test Anchor Navigation**
-```bash
-# Navigate to Anchor A
-ros2 topic pub --once /stretch/navigate_to_anchor std_msgs/msg/String "{data: 'A'}"
-```
-
-**6. Monitor Joint States**
+**4. Monitor Joint States**
 ```bash
 ros2 topic echo /stretch/joint_states
 ```
 
-### Expected Behavior
+## 🔧 Troubleshooting
 
-| Test | Command | Expected Result |
-|------|---------|----------------|
-| Base velocity | `ros2 topic pub ... /stretch/cmd_vel` | Robot base moves |
-| Joint commands | `ros2 topic pub ... /stretch/joint_commands` | Robot joints move |
-| Anchor command | `ros2 topic pub ... /stretch/navigate_to_anchor` | Robot navigates to anchor |
-| Joint states | `ros2 topic echo /stretch/joint_states` | Continuous state updates |
-| Keyboard controller | `python stretch_keyboard_controller.py` | Commands sent on keypress |
+### Robot doesn't turn around center
+- Ensure forward velocity is zero when turning
+- Check navigation controller is properly initialized
 
-## Troubleshooting
+### Joint commands move unexpected joints
+- Joint states are automatically synced before publishing
+- If issue persists, check joint state callback is receiving updates
 
-### Robot doesn't move during navigation
-- Check if navigation is active: `ros2 topic echo /stretch/navigation_active`
-- Verify target was set: Check logs for "Navigating to anchor..."
-- Check for manual override: Any cmd_vel commands cancel navigation
-
-### Robot overshoots target
-- Reduce `K_P_LINEAR` gain in `navigation.py`
-- Increase `POSITION_TOLERANCE` for earlier stopping
-
-### Robot oscillates
-- Reduce `K_P_ANGULAR` gain in `navigation.py`
-- Increase `ALIGNMENT_THRESHOLD` for less strict alignment
-
-### Camera window shows black
-- Ensure the camera is properly initialized
-- Check that the robot's head is positioned correctly
-- Try moving the head with arrow keys
+### Navigation doesn't complete
+- Check navigation status: `ros2 topic echo /stretch/navigation_active`
+- Verify target was set (check logs)
+- Manual commands cancel navigation
 
 ### Topics not appearing
-- Make sure the simulation node is running
-- Check ROS 2 is sourced: `echo $ROS_DISTRO`
-- Verify with: `ros2 node list` (should show `stretch_sim`)
+- Ensure simulation node is running
+- Verify ROS 2 is sourced: `echo $ROS_DISTRO`
+- Check nodes: `ros2 node list`
 
-## Available Scripts
+### Camera shows black
+- Ensure camera is initialized
+- Try moving head with arrow keys
+- Check camera rendering in simulation window
+
+## 📊 Available Scripts
 
 | Script | Purpose | Environment |
 |--------|---------|-------------|
 | `stretch_ros2_sim.py` | Main simulation node | simenv_ros2 |
-| `stretch_keyboard_controller.py` | Keyboard input → ROS 2 | simenv_ros2 |
-| `teleop.py` | Direct keyboard control | simenv |
-| `view_world.py` | View world only | simenv |
+| `interactive_controller.py` | Interactive command-line controller | simenv_ros2 |
+| `stretch_keyboard_controller.py` | Keyboard controller | simenv_ros2 |
 | `test_ros2_communication.py` | Test ROS 2 setup | simenv_ros2 |
-
+| `verify_setup.py` | Verify environment setup | simenv_ros2 |

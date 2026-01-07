@@ -2,190 +2,149 @@
 
 Complete setup instructions for the Stretch 2 Simulation Environment.
 
-## Prerequisites
+## 📋 Prerequisites
 
-- Conda (Miniconda or Anaconda)
-- ROS 2 (Humble or Jazzy) - Optional, for ROS 2 communication
-- Python 3.11 (for regular simulation) or Python 3.12 (for ROS 2)
+- **Conda** (Miniconda or Anaconda)
+- **ROS 2 Jazzy** (for ROS 2 features)
+- **Python 3.12**
 
-## Environment Setup
+## 🚀 Installation
 
-### Two Environments Strategy
+### 1. Clone Repository
 
-We use **two separate conda environments** to avoid breaking existing packages:
-
-#### 1. `simenv` (Python 3.11) - Regular Simulation
-- **Purpose:** All existing work (teleop, view_world, etc.)
-- **Python:** 3.11.14
-- **Status:** ✅ Keep as-is, no changes needed
-
-#### 2. `simenv_ros2` (Python 3.12) - ROS 2 Environment  
-- **Purpose:** ROS 2 communication with Stretch simulation
-- **Python:** 3.12
-- **Status:** ⚙️ Create this new environment
-
-### Installation Steps
-
-**1. Clone the repository**
 ```bash
 git clone <repository-url>
-cd Stretch2_SimulationEnv-main
+cd Stretch2_SimulationEnv
 ```
 
-**2. Create the regular environment (first time)**
-```bash
-conda env create -f environment.yml
-conda activate simenv
-```
-
-**3. Update the environment (after pulling updates)**
-```bash
-conda env update -f environment.yml --prune
-```
-
-**4. Create ROS 2 environment (optional, for ROS 2 features)**
-```bash
-# Option 1: Use the automated script
-./setup_ros2_env.sh
-
-# Option 2: Manual creation
-conda env create -f environment_ros2.yml
-conda activate simenv_ros2
-```
-
-**5. Verify the setup**
-```bash
-python verify_setup.py
-```
-
-This script checks:
-- Conda environment activation
-- Required Python packages
-- Required files and directories
-- MuJoCo model loading
-
-## ROS 2 Setup (Optional)
-
-### Prerequisites
-
-1. **Install ROS 2** (Humble or Jazzy recommended)
-   - Follow the official installation guide: https://docs.ros.org/en/humble/Installation.html
-   - For Ubuntu 22.04: ROS 2 Humble
-   - For Ubuntu 24.04: ROS 2 Jazzy
-
-2. **Activate ROS 2 environment**
-   ```bash
-   conda activate simenv_ros2
-   ```
-
-3. **Install ROS 2 Python packages**
-   ```bash
-   pip install rclpy
-   ```
-
-   Note: The ROS 2 message packages (`geometry_msgs`, `sensor_msgs`, `std_msgs`) should be available if ROS 2 is properly installed.
-
-### ROS 2 Topics
-
-The simulation node publishes and subscribes to the following topics:
-
-**Subscribed Topics (Commands):**
-- `/stretch/cmd_vel` (geometry_msgs/Twist) - Base velocity commands
-- `/stretch/joint_commands` (std_msgs/Float64MultiArray) - Joint position commands
-- `/stretch/navigate_to_anchor` (std_msgs/String) - Navigate to anchor command
-
-**Published Topics (State):**
-- `/stretch/joint_states` (sensor_msgs/JointState) - Current joint positions and velocities
-- `/stretch/navigation_active` (std_msgs/Bool) - Navigation status
-- `/stretch/camera/image_raw` (sensor_msgs/Image) - Camera feed
-
-## Python Version Fixes
-
-### Problem: Python Version Mismatch
-
-ROS 2 Jazzy requires Python 3.12, but your conda environment might use Python 3.11.
-
-### Solution: Separate Environments (Recommended)
-
-Create a **new conda environment** specifically for ROS 2 work, keeping your original `simenv` intact:
+### 2. Create Environment
 
 ```bash
-# Create new environment with Python 3.12
+# Create ROS 2 environment
 conda env create -f environment_ros2.yml
 
-# Activate it
+# Activate environment
 conda activate simenv_ros2
 
 # Source ROS 2
 source /opt/ros/jazzy/setup.bash
-
-# Test it
-python -c "import rclpy; import mujoco; print('✓ Everything works!')"
 ```
 
-**Benefits:**
-- ✅ Your original `simenv` stays untouched
-- ✅ All existing packages continue to work
-- ✅ ROS 2 has its own clean environment
-- ✅ Easy to switch between environments
-
-### Alternative: Update Existing Environment
-
-If you prefer to update your existing environment:
+### 3. Verify Setup
 
 ```bash
-conda activate simenv
-conda install python=3.12 -y
-pip install --force-reinstall mujoco mujoco-python-viewer numpy scipy
+python verify_setup.py
 ```
 
-## Environment Comparison
+This checks:
+- ✅ Conda environment activation
+- ✅ Required Python packages
+- ✅ Required files and directories
+- ✅ MuJoCo model loading
 
-| Feature | simenv (3.11) | simenv_ros2 (3.12) |
-|---------|---------------|-------------------|
-| Python | 3.11.14 | 3.12 |
-| MuJoCo | ✅ | ✅ |
-| ROS 2 | ❌ | ✅ |
-| teleop.py | ✅ | ✅ |
-| view_world.py | ✅ | ✅ |
-| stretch_ros2_sim.py | ❌ | ✅ |
+## 🔧 ROS 2 Setup
 
-## Switching Between Environments
+### Install ROS 2
+
+Follow the official installation guide:
+- **Ubuntu 22.04**: [ROS 2 Humble](https://docs.ros.org/en/humble/Installation.html)
+- **Ubuntu 24.04**: [ROS 2 Jazzy](https://docs.ros.org/en/jazzy/Installation.html)
+
+### Install Python Packages
 
 ```bash
-# Switch to regular environment
-conda activate simenv
+conda activate simenv_ros2
+pip install rclpy
+```
 
-# Switch to ROS 2 environment
+Note: ROS 2 message packages (`geometry_msgs`, `sensor_msgs`, `std_msgs`) are included with ROS 2 installation.
+
+### Verify ROS 2
+
+```bash
+source /opt/ros/jazzy/setup.bash
+python -c "import rclpy; print('✓ ROS 2 ready')"
+```
+
+## 🔌 ROS 2 Topics
+
+### Subscribed (Commands)
+- `/stretch/cmd_vel` - Base velocity commands
+- `/stretch/joint_commands` - Joint position commands
+- `/stretch/navigate_to_anchor` - Navigate to anchor
+- `/stretch/turn_towards_anchor` - Turn towards anchor
+- `/stretch/navigate_to_position` - Navigate to position
+- `/stretch/reset_arm` - Reset arm command
+
+### Published (State)
+- `/stretch/joint_states` - Current joint positions and velocities
+- `/stretch/navigation_active` - Navigation status
+- `/stretch/camera/image_raw` - Camera feed
+
+## 🔄 Environment Management
+
+### Activate Environment
+
+```bash
 conda activate simenv_ros2
 source /opt/ros/jazzy/setup.bash
 ```
 
-## Troubleshooting
+### Update Environment
 
-**Q: "No module named 'rclpy'"**
-- Solution: Make sure ROS 2 is installed and you've sourced the setup script
-- Try: `source /opt/ros/jazzy/setup.bash` (adjust path for your version)
+```bash
+conda env update -f environment_ros2.yml --prune
+```
 
-**Q: "ImportError: cannot import name 'Twist'"**
-- Solution: Source ROS 2 setup script before running Python scripts
-- The message packages are part of the ROS 2 installation
+### Remove Environment
 
-**Q: Do I need both environments?**  
-A: Only if you want to use ROS 2. For regular simulation, just use `simenv`.
+```bash
+conda env remove -n simenv_ros2
+```
 
-**Q: Can I delete simenv_ros2 later?**  
-A: Yes! It's completely separate. Just `conda env remove simenv_ros2`.
+## 🐛 Troubleshooting
 
-**Q: Topics not appearing**
-- Solution: Make sure both nodes are running and ROS 2 is properly sourced
-- Check with: `ros2 topic list`
+### "No module named 'rclpy'"
+- Ensure ROS 2 is installed
+- Source ROS 2: `source /opt/ros/jazzy/setup.bash`
+- Install: `pip install rclpy`
 
-## Portability
+### "ImportError: cannot import name 'Twist'"
+- Source ROS 2 setup script before running
+- Message packages are part of ROS 2 installation
 
-This repository is designed to work on any computer without modification:
-- ✅ All paths are relative to the repository root
+### Topics not appearing
+- Verify simulation node is running
+- Check ROS 2 is sourced: `echo $ROS_DISTRO`
+- List nodes: `ros2 node list`
+
+### Python version issues
+- Ensure using Python 3.12
+- Check: `python --version`
+- Recreate environment if needed
+
+## 📦 Dependencies
+
+### Core
+- `mujoco` - Physics simulation
+- `mujoco-python-viewer` - Visualization
+- `numpy` - Numerical operations
+- `opencv-python` - Image processing
+
+### ROS 2
+- `rclpy` - ROS 2 Python client
+- ROS 2 message packages (via ROS 2 installation)
+
+## 🌐 Portability
+
+This repository is designed to work on any system:
+- ✅ All paths are relative
 - ✅ No hardcoded user-specific paths
-- ✅ Works on Linux, macOS, and Windows (with conda)
+- ✅ Works on Linux, macOS, Windows (with conda)
 - ✅ Scripts can be run from any directory
 
+## 📚 Additional Resources
+
+- [ROS 2 Documentation](https://docs.ros.org/)
+- [MuJoCo Documentation](https://mujoco.readthedocs.io/)
+- [Stretch 2 Documentation](https://docs.hello-robot.com/)

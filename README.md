@@ -1,109 +1,148 @@
-# Stretch2_SimulationEnv
+# Stretch 2 Simulation Environment
 
-A lightweight simulation environment for the **Hello Robot Stretch 2** platform using **MuJoCo**, **Python**, and optionally **ROS 2**.
+A high-fidelity MuJoCo-based simulation environment for the **Hello Robot Stretch 2** platform with ROS 2 integration and interactive control.
 
-## Features
+## ✨ Features
 
-- ✅ MuJoCo-based physics simulation
-- ✅ Interactive keyboard control
-- ✅ ROS 2 communication (optional)
-- ✅ Autonomous navigation to anchor points
-- ✅ Real-time camera feed
-- ✅ Joint and base control
-- ✅ Custom environments with tables and objects
+- **Physics Simulation** - MuJoCo-based realistic robot dynamics
+- **ROS 2 Integration** - Full ROS 2 communication stack
+- **Interactive Control** - Command-line interface with action-based control
+- **Autonomous Navigation** - Anchor-based navigation with turn-in-place
+- **Real-time Visualization** - Live camera feed and 3D viewer
+- **Action System** - YAML-defined micro and macro actions
 
-## Quick Start
+## 🚀 Quick Start
 
-### Regular Simulation (No ROS 2)
+### Prerequisites
 
-```bash
-# Create and activate environment
-conda env create -f environment.yml
-conda activate simenv
+- Conda (Miniconda or Anaconda)
+- ROS 2 Jazzy (optional, for ROS 2 features)
+- Python 3.12
 
-# Run interactive simulation
-python teleop.py
-```
-
-### ROS 2 Simulation
+### Installation
 
 ```bash
-# Create ROS 2 environment
+# Clone repository
+git clone <repository-url>
+cd Stretch2_SimulationEnv
+
+# Create environment
 conda env create -f environment_ros2.yml
 conda activate simenv_ros2
 source /opt/ros/jazzy/setup.bash
 
-# Start simulation
-./run_ros2_sim.sh
+# Verify setup
+python verify_setup.py
+```
 
-# In another terminal, use keyboard controller
+### Running the Simulation
+
+**Terminal 1: Start Simulation**
+```bash
 conda activate simenv_ros2
 source /opt/ros/jazzy/setup.bash
-python stretch_keyboard_controller.py
+python stretch_ros2_sim.py
 ```
 
-## Keyboard Controls
-
-- **W/S** - Move forward/backward
-- **A/D** - Turn left/right
-- **1/2/3/4** - Navigate to anchors (A, B, C, D)
-- **Q/E** - Lift up/down
-- **R/F** - Arm extend/retract
-- **T/G** - Wrist yaw rotate
-- **V/B** - Wrist roll rotate
-- **Z/X** - Gripper open/close
-- **Arrow Keys** - Pan/tilt head
-- **ESC** - Exit
-
-## Documentation
-
-- **[SETUP.md](SETUP.md)** - Complete setup instructions (environments, ROS 2, Python version)
-- **[USAGE.md](USAGE.md)** - Usage guide (running, navigation, testing, troubleshooting)
-- **[TEST_RESULTS.md](TEST_RESULTS.md)** - Test results and verification
-
-## Project Structure
-
-```
-Stretch2_SimulationEnv-main/
-├── stretch.xml              # Robot model
-├── table_world.xml          # World with anchors
-├── stretch_ros2_sim.py     # Main ROS 2 simulation node
-├── stretch_keyboard_controller.py  # Keyboard controller
-├── navigation.py            # Navigation controller
-├── teleop.py               # Direct keyboard control
-├── environment.yml         # Conda environment (Python 3.11)
-├── environment_ros2.yml    # Conda environment (Python 3.12, ROS 2)
-└── assets/                 # 3D models and textures
+**Terminal 2: Interactive Controller**
+```bash
+conda activate simenv_ros2
+source /opt/ros/jazzy/setup.bash
+python interactive_controller.py
 ```
 
-## ROS 2 Topics
+## 🎮 Interactive Controller
 
-**Subscribed:**
+The interactive controller provides an elegant command-line interface:
+
+```bash
+stretch> help                    # Show all available actions
+stretch> go_to_anchor anchor=A  # Navigate to anchor A
+stretch> reset_arm              # Reset arm to default position
+stretch> elevate_arm height=0.5 # Move lift to middle position
+stretch> turn_towards anchor=ORIGIN  # Turn towards center
+```
+
+**Features:**
+- Normalized parameters (0-1 range, where 0.5 = middle/default)
+- Command history (↑/↓ arrow keys)
+- Tab completion
+- Action composition via macro actions
+
+## 📋 Available Actions
+
+### Navigation
+- `go_to_anchor anchor=<A-F|ORIGIN> [speed=0.5]` - Navigate to anchor
+- `turn_towards anchor=<A-F|ORIGIN> [speed=0.5]` - Turn towards anchor
+- `go_to_position x=<0-1> y=<0-1> [direction=<0-1>] [speed=0.5]` - Navigate to position
+
+### Arm Control
+- `reset_arm [speed=0.5]` - Reset arm to default position
+- `elevate_arm height=<0-1> [speed=0.5]` - Set lift height
+- `extend_arm length=<0-1> [speed=0.5]` - Extend/retract arm
+- `rotate_wrist angle=<0-1> [speed=0.5]` - Rotate wrist yaw
+- `open_gripper [speed=0.5]` - Open gripper fully
+- `close_gripper [speed=0.5]` - Close gripper fully
+- `set_gripper width=<0-1> [speed=0.5]` - Set gripper width
+
+### Utility
+- `wait duration=<seconds>` - Wait for duration
+- `wait_for_arm [timeout=<seconds>]` - Wait until arm reaches target
+
+## 🗺️ Anchors
+
+Predefined navigation points in the world:
+- **A, B, C, D, E, F** - Table positions
+- **ORIGIN** - Center point (average of all anchors)
+
+## 📁 Project Structure
+
+```
+Stretch2_SimulationEnv/
+├── stretch.xml                    # Robot model definition
+├── table_world.xml                # World with tables and objects
+├── actions.yaml                   # Action definitions
+├── stretch_ros2_sim.py           # Main simulation node
+├── interactive_controller.py     # Interactive command-line controller
+├── stretch_keyboard_controller.py # Keyboard controller
+├── navigation.py                 # Navigation controller
+└── assets/                       # 3D models and textures
+```
+
+## 🔌 ROS 2 Topics
+
+### Subscribed
 - `/stretch/cmd_vel` - Base velocity commands
 - `/stretch/joint_commands` - Joint position commands
-- `/stretch/navigate_to_anchor` - Navigate to anchor command
+- `/stretch/navigate_to_anchor` - Navigate to anchor
+- `/stretch/turn_towards_anchor` - Turn towards anchor
+- `/stretch/navigate_to_position` - Navigate to position
+- `/stretch/reset_arm` - Reset arm command
 
-**Published:**
+### Published
 - `/stretch/joint_states` - Current joint states
 - `/stretch/navigation_active` - Navigation status
 - `/stretch/camera/image_raw` - Camera feed
 
-## Goals
+## 📚 Documentation
 
-Build a modular simulation environment for the **Stretch 2 robot**, supporting:
+- **[SETUP.md](SETUP.md)** - Detailed setup instructions
+- **[USAGE.md](USAGE.md)** - Complete usage guide
+- **[actions.yaml](actions.yaml)** - Action definitions and examples
 
-* Custom MuJoCo-based environments
-* Robot joint and wheel actuation
-* Interactive scenes with tables, objects, and ingredients
-* ROS 2 control and visualization
-* Autonomous navigation
+## 🎯 Design Philosophy
 
-## Resources
+- **Normalized Parameters** - All movement parameters use 0-1 range (0=min, 0.5=middle, 1=max)
+- **Action Composition** - Macro actions built from micro actions
+- **Speed Control** - All movements support speed control (0-1 range)
+- **State Synchronization** - Joint states automatically sync with robot
 
-* [Stretch 2 ROS 2 Description](https://docs.hello-robot.com/0.2/stretch-ros2/stretch_description/)
-* [Stretch 2 STEP/URDF Files](https://github.com/hello-robot/stretch_tool_share/tree/master/tool_share/stretch_2_STEP)
-* [Stretch Tool Share Repository](https://github.com/hello-robot/stretch_tool_share/)
+## 🔗 Resources
 
-## License
+- [Stretch 2 Documentation](https://docs.hello-robot.com/)
+- [MuJoCo Documentation](https://mujoco.readthedocs.io/)
+- [ROS 2 Documentation](https://docs.ros.org/)
+
+## 📄 License
 
 [Add your license here]
