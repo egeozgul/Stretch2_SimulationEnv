@@ -267,7 +267,8 @@ class StretchSimNode(Node):
     
     def run_simulation(self):
         """Run the MuJoCo simulation loop."""
-        with mujoco.viewer.launch_passive(self.model, self.data) as viewer:
+        #with mujoco.viewer.launch_passive(self.model, self.data) as viewer:
+        with mujoco.viewer.launch_passive(self.model, self.data, show_left_ui=False, show_right_ui=False) as viewer:
             viewer.cam.lookat[:] = [0, 3, 1]
             viewer.cam.distance = 5
             viewer.cam.elevation = -20
