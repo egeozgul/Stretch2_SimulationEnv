@@ -41,19 +41,21 @@ JOINT_COMMAND_MAP = [
     ('gripper', 'grip'), ('head_pan', 'head_pan'), ('head_tilt', 'head_tilt')
 ]
 
-# Reset positions: (lift_max, arm_min, wrist_mid, gripper_max)
 RESET_POSITIONS = {
-    'lift': 0.6,  # Maximum up
-    'arm_extend': 0.0,  # Fully retracted
+    'lift': 0.6,
+    'arm_extend': 0.0,
     'wrist_yaw': (4.0 + -1.75) / 2,  # Middle position (1.125)
-    'gripper': 0.04  # Fully open
+    'gripper': 0.04
 }
 
 # Timing constants
 PUB_RATE = 30.0  # Hz
 RENDER_RATE = 20.0  # Hz
-RESET_SPEED = 0.02  # Position change per step for smooth movement
+RESET_SPEED = 0.02
 CAMERA_WIDTH, CAMERA_HEIGHT = 640, 480
+DEFAULT_SPEED = 50.0
+JOINT_TOLERANCE = 0.001
+ZERO_PLACEHOLDER_THRESHOLD = 0.05
 
 
 class StretchSimNode(Node):
@@ -79,11 +81,9 @@ class StretchSimNode(Node):
         self._nav_log_counter = 0
         self._resetting_arm = False
         self._reset_targets = {}
-        
-        # Joint movement targets and speed for gradual movement
-        self._joint_targets = {}  # Target positions for each actuator
-        self._joint_speed_percent = {}  # Speed percentage for each actuator (0-100)
-        self._base_joint_speed = 0.02  # Base speed for joint movement (position change per step)
+        self._joint_targets = {}
+        self._joint_speed_percent = {}
+        self._base_joint_speed = 0.02
         
         self.get_logger().info('Stretch 2 ROS 2 Simulation Node started')
     
@@ -137,8 +137,10 @@ class StretchSimNode(Node):
     def _setup_ros2(self):
         """Setup ROS 2 publishers and subscribers."""
         self.create_subscription(Twist, '/stretch/cmd_vel', self._cmd_vel_callback, 10)
+        self.create_subscription(Float64MultiArray, '/stretch/joint_command', 
+                                self._joint_command_callback, 10)
         self.create_subscription(Float64MultiArray, '/stretch/joint_commands', 
-                                self._joint_commands_callback, 10)
+                                self._joint_commands_callback, 10)  # Legacy
         self.create_subscription(String, '/stretch/navigate_to_anchor', 
                                 self._navigate_to_anchor_callback, 10)
         self.create_subscription(String, '/stretch/turn_towards_anchor', 
@@ -151,73 +153,84 @@ class StretchSimNode(Node):
         self.nav_status_pub = self.create_publisher(Bool, '/stretch/navigation_active', 10)
         self.camera_pub = self.create_publisher(Image, '/stretch/camera/image_raw', 10)
     
-    def _cmd_vel_callback(self, msg):
-        """Handle base velocity commands."""
-        has_manual_input = abs(msg.linear.x) > 0.05 or abs(msg.angular.z) > 0.05
-        
-        if has_manual_input and self.nav_controller.is_active():
-            self.manual_control = True
-            self.nav_controller.cancel()
-            self.get_logger().info('Manual control override')
-        
-        # Ensure forward is exactly 0 when turning in place (only angular velocity)
-        # This prevents pivoting around one wheel
-        linear_x = msg.linear.x
-        if abs(linear_x) < 0.001 and abs(msg.angular.z) > 0.001:
-            linear_x = 0.0
-        
-        self.ctrl_state['forward'] = linear_x
-        self.ctrl_state['turn'] = msg.angular.z
+    @staticmethod
+    def _clamp_speed(speed_percent):
+        """Clamp speed percentage to valid range."""
+        return max(0.0, min(100.0, float(speed_percent)))
     
-    def _joint_commands_callback(self, msg):
-        """Handle joint position commands with gradual movement."""
-        if self._resetting_arm:
-            return  # Ignore manual commands during reset
+    def _set_joint_target(self, actuator_name, value, speed_percent):
+        """Set target for a joint actuator."""
+        if actuator_name not in self.ctrl_state:
+            return False
         
-        if len(msg.data) < len(JOINT_COMMAND_MAP):
-            self.get_logger().warn(
-                f'Received {len(msg.data)} joint commands, expected at least {len(JOINT_COMMAND_MAP)}. Ignoring.'
-            )
+        # Find corresponding cmd_name for limits
+        cmd_name = next((cmd for cmd, act in JOINT_COMMAND_MAP if act == actuator_name), None)
+        if cmd_name:
+            min_val, max_val = JOINT_LIMITS[cmd_name]
+            value = np.clip(value, min_val, max_val)
+        
+        self._joint_targets[actuator_name] = value
+        self._joint_speed_percent[actuator_name] = speed_percent
+        return True
+    
+    def _joint_command_callback(self, msg):
+        """Handle single joint position command: [joint_index, value, speed_percent]."""
+        if self._resetting_arm or len(msg.data) < 2:
             return
         
-        # Extract speed if provided (last element, optional)
-        speed_percent = 50.0  # Default speed
-        if len(msg.data) > len(JOINT_COMMAND_MAP):
-            speed_percent = float(msg.data[-1])
-            speed_percent = max(0.0, min(100.0, speed_percent))  # Clamp to 0-100
+        joint_index = int(msg.data[0])
+        value = float(msg.data[1])
+        speed_percent = self._clamp_speed(msg.data[2] if len(msg.data) > 2 else DEFAULT_SPEED)
         
-        # Set targets for gradual movement
-        for i, ((cmd_name, actuator_name), value) in enumerate(zip(JOINT_COMMAND_MAP, msg.data[:len(JOINT_COMMAND_MAP)])):
+        if not (0 <= joint_index < len(JOINT_COMMAND_MAP)):
+            self.get_logger().warn(f'Invalid joint index: {joint_index}')
+            return
+        
+        _, actuator_name = JOINT_COMMAND_MAP[joint_index]
+        self._set_joint_target(actuator_name, value, speed_percent)
+    
+    def _joint_commands_callback(self, msg):
+        """Handle multiple joint commands (legacy): [lift, arm_extend, ..., speed_percent]."""
+        if self._resetting_arm or len(msg.data) < len(JOINT_COMMAND_MAP):
+            return
+        
+        speed_percent = self._clamp_speed(
+            msg.data[-1] if len(msg.data) > len(JOINT_COMMAND_MAP) else DEFAULT_SPEED
+        )
+        
+        for i, ((cmd_name, actuator_name), value) in enumerate(
+            zip(JOINT_COMMAND_MAP, msg.data[:len(JOINT_COMMAND_MAP)])
+        ):
             if actuator_name not in self.ctrl_state:
-                self.get_logger().warn(f'Unknown actuator: {actuator_name} at index {i}')
                 continue
+            
             min_val, max_val = JOINT_LIMITS[cmd_name]
             target_value = np.clip(value, min_val, max_val)
+            current_value = self.ctrl_state[actuator_name]
             
-            # Store target and speed for gradual movement
-            self._joint_targets[actuator_name] = target_value
-            self._joint_speed_percent[actuator_name] = speed_percent
+            # Skip zero placeholders for joints with negative minimum
+            if (target_value == 0.0 and abs(current_value) > ZERO_PLACEHOLDER_THRESHOLD 
+                and min_val < 0.0):
+                continue
+            
+            self._set_joint_target(actuator_name, target_value, speed_percent)
     
     def _reset_arm_callback(self, msg):
-        """Handle arm reset command."""
+        """Handle arm reset command: "reset" or "reset:speed_percent"."""
         data = msg.data.strip()
         if not data.lower().startswith('reset'):
             return
         
-        # Parse speed percentage if provided (format: "reset:50" or "reset")
-        speed_percent = 50.0  # Default
+        speed_percent = DEFAULT_SPEED
         if ':' in data:
             try:
-                speed_percent = float(data.split(':', 1)[1])
-                speed_percent = max(0.0, min(100.0, speed_percent))  # Clamp to 0-100
+                speed_percent = self._clamp_speed(data.split(':', 1)[1])
             except ValueError:
-                self.get_logger().warn(f'Invalid speed percentage in reset command: {data}')
+                self.get_logger().warn(f'Invalid speed in reset command: {data}')
         
-        self.get_logger().info(f'Starting arm reset sequence (speed: {speed_percent}%)')
+        self.get_logger().info(f'Starting arm reset (speed: {speed_percent}%)')
         self._resetting_arm = True
         self._reset_speed_percent = speed_percent
-        
-        # Set target positions for reset
         self._reset_targets = {
             'lift': RESET_POSITIONS['lift'],
             'arm_extend': RESET_POSITIONS['arm_extend'],
@@ -230,11 +243,8 @@ class StretchSimNode(Node):
         if not self._resetting_arm:
             return
         
-        # Calculate speed based on percentage (0-100 maps to 0.0-2.0x base speed)
-        speed_percent = getattr(self, '_reset_speed_percent', 50.0)
-        speed_multiplier = speed_percent / 50.0  # 50% = 1.0x, 100% = 2.0x, 0% = 0.0x
-        current_reset_speed = RESET_SPEED * speed_multiplier
-        
+        speed_multiplier = getattr(self, '_reset_speed_percent', DEFAULT_SPEED) / DEFAULT_SPEED
+        current_speed = RESET_SPEED * speed_multiplier
         all_reached = True
         
         for actuator_name, target in self._reset_targets.items():
@@ -244,11 +254,10 @@ class StretchSimNode(Node):
             current = self.ctrl_state[actuator_name]
             diff = target - current
             
-            if abs(diff) < current_reset_speed:
+            if abs(diff) < current_speed:
                 self.ctrl_state[actuator_name] = target
             else:
-                # Move towards target at current_reset_speed
-                step = current_reset_speed if diff > 0 else -current_reset_speed
+                step = current_speed if diff > 0 else -current_speed
                 self.ctrl_state[actuator_name] = current + step
                 all_reached = False
         
@@ -257,11 +266,10 @@ class StretchSimNode(Node):
             self.get_logger().info('✓ Arm reset complete')
     
     def _update_joint_movements(self):
-        """Gradually move joints towards their target positions based on speed."""
+        """Gradually move joints towards their target positions."""
         if not self._joint_targets:
             return
         
-        # Process each joint target
         for actuator_name, target in list(self._joint_targets.items()):
             if actuator_name not in self.ctrl_state:
                 continue
@@ -269,94 +277,143 @@ class StretchSimNode(Node):
             current = self.ctrl_state[actuator_name]
             diff = target - current
             
-            # Check if already at target
-            if abs(diff) < 0.001:  # Small tolerance
+            if abs(diff) < JOINT_TOLERANCE:
                 self.ctrl_state[actuator_name] = target
-                # Remove from targets when reached
-                del self._joint_targets[actuator_name]
-                if actuator_name in self._joint_speed_percent:
-                    del self._joint_speed_percent[actuator_name]
+                self._joint_targets.pop(actuator_name, None)
+                self._joint_speed_percent.pop(actuator_name, None)
                 continue
             
-            # Calculate speed based on percentage (0-100 maps to 0.0-2.0x base speed)
-            speed_percent = self._joint_speed_percent.get(actuator_name, 50.0)
-            speed_multiplier = speed_percent / 50.0  # 50% = 1.0x, 100% = 2.0x, 0% = 0.0x
+            speed_multiplier = self._joint_speed_percent.get(actuator_name, DEFAULT_SPEED) / DEFAULT_SPEED
             current_speed = self._base_joint_speed * speed_multiplier
             
-            # Move towards target
             if abs(diff) < current_speed:
                 self.ctrl_state[actuator_name] = target
-                # Remove from targets when reached
-                del self._joint_targets[actuator_name]
-                if actuator_name in self._joint_speed_percent:
-                    del self._joint_speed_percent[actuator_name]
+                self._joint_targets.pop(actuator_name, None)
+                self._joint_speed_percent.pop(actuator_name, None)
             else:
-                # Move towards target at current_speed
                 step = current_speed if diff > 0 else -current_speed
                 self.ctrl_state[actuator_name] = current + step
     
-    def _navigate_to_anchor_callback(self, msg):
-        """Handle navigate to anchor command."""
-        anchor_key = msg.data.strip().upper()
-        if anchor_key not in self.anchors:
-            available = ', '.join(sorted(self.anchors.keys())) if self.anchors else 'none'
-            self.get_logger().warn(f'Unknown anchor: {anchor_key}. Available: {available}')
-            return
+    def _handle_anchor_command(self, anchor_key, turn_only=False, delta_angle=None, 
+                               position_tolerance=None, target_angle_degrees=None):
+        """
+        Handle anchor navigation command.
         
-        anchor_data = self.anchors[anchor_key]
-        target_pos = anchor_data['pos']
-        target_direction = anchor_data.get('direction')
+        Args:
+            anchor_key: Anchor identifier (e.g., "ORIGIN", "A", "B") or None if target_angle_degrees is used
+            turn_only: If True, only turn towards anchor/angle without moving
+            delta_angle: Optional delta angle in degrees for turn-only mode (default: 5.0)
+            position_tolerance: Optional position tolerance in meters (default: 0.15)
+            target_angle_degrees: Optional absolute target angle in degrees (0-360) for turn_towards
+        """
+        if turn_only:
+            if target_angle_degrees is not None:
+                # Absolute angle mode
+                self.nav_controller.set_turn_only_target(None, delta_angle, target_angle_degrees)
+                delta_value = delta_angle if delta_angle is not None else 5.0
+                self.get_logger().info(f'Turning to absolute angle {target_angle_degrees:.1f}° (delta_angle={delta_value:.1f}°)')
+            else:
+                # Position-based mode
+                anchor_key = anchor_key.strip().upper()
+                if anchor_key not in self.anchors:
+                    available = ', '.join(sorted(self.anchors.keys())) if self.anchors else 'none'
+                    self.get_logger().warn(f'Unknown anchor: {anchor_key}. Available: {available}')
+                    return
+                anchor_data = self.anchors[anchor_key]
+                target_pos = anchor_data['pos']
+                current_pos, _ = self._get_robot_pose()
+                distance = np.linalg.norm(np.array(target_pos[:2]) - current_pos[:2])
+                self.nav_controller.set_turn_only_target(target_pos, delta_angle)
+                delta_value = delta_angle if delta_angle is not None else 5.0
+                self.get_logger().info(f'Turning towards anchor {anchor_key} (distance: {distance:.2f}m, delta_angle={delta_value:.1f}°)')
+        else:
+            # go_to_anchor: no direction alignment
+            anchor_key = anchor_key.strip().upper()
+            if anchor_key not in self.anchors:
+                available = ', '.join(sorted(self.anchors.keys())) if self.anchors else 'none'
+                self.get_logger().warn(f'Unknown anchor: {anchor_key}. Available: {available}')
+                return
+            anchor_data = self.anchors[anchor_key]
+            target_pos = anchor_data['pos']
+            current_pos, _ = self._get_robot_pose()
+            distance = np.linalg.norm(np.array(target_pos[:2]) - current_pos[:2])
+            # go_to_anchor no longer does direction alignment
+            self.nav_controller.set_target(target_pos, None, position_tolerance, None)
+            pos_tol_info = f", pos_tol={position_tolerance:.2f}m" if position_tolerance else ""
+            self.get_logger().info(f'Navigating to anchor {anchor_key} (distance: {distance:.2f}m{pos_tol_info})')
         
-        current_pos, _ = self._get_robot_pose()
-        distance = np.linalg.norm(np.array(target_pos[:2]) - current_pos[:2])
-        
-        self.nav_controller.set_target(target_pos, target_direction)
         self.manual_control = False
+    
+    def _navigate_to_anchor_callback(self, msg):
+        """Handle navigate to anchor command. Format: "ANCHOR" or "ANCHOR:pos_tol"."""
+        data = msg.data.strip()
+        position_tolerance = None
         
-        direction_info = f", direction={math.degrees(target_direction):.1f}°" if target_direction else ""
-        self.get_logger().info(
-            f'Navigating to anchor {anchor_key} at {target_pos} '
-            f'(distance: {distance:.2f}m{direction_info})'
-        )
+        if ':' in data:
+            parts = data.split(':')
+            anchor_key = parts[0].strip().upper()
+            try:
+                if len(parts) >= 2:
+                    position_tolerance = float(parts[1].strip())
+            except (ValueError, IndexError):
+                self.get_logger().warn(f'Invalid position_tolerance in go_to_anchor command: {data}, using default')
+        else:
+            anchor_key = data.strip().upper()
+        
+        self._handle_anchor_command(anchor_key, turn_only=False, 
+                                   position_tolerance=position_tolerance)
     
     def _turn_towards_anchor_callback(self, msg):
-        """Handle turn towards anchor command (rotation only, no movement)."""
-        anchor_key = msg.data.strip().upper()
-        if anchor_key not in self.anchors:
-            available = ', '.join(sorted(self.anchors.keys())) if self.anchors else 'none'
-            self.get_logger().warn(f'Unknown anchor: {anchor_key}. Available: {available}')
-            return
+        """Handle turn towards anchor/angle command. Format: "ANCHOR:delta_angle" or "degrees:target_angle:delta_angle"."""
+        data = msg.data.strip()
+        delta_angle = None
+        target_angle_degrees = None
+        anchor_key = None
         
-        anchor_data = self.anchors[anchor_key]
-        target_pos = anchor_data['pos']
+        if ':' in data:
+            parts = data.split(':')
+            first_part = parts[0].strip().upper()
+            
+            if first_part == "DEGREES" or first_part.replace('.', '').replace('-', '').isdigit():
+                # Absolute angle mode: "degrees:target_angle:delta_angle" or "target_angle:delta_angle"
+                try:
+                    if first_part == "DEGREES":
+                        if len(parts) >= 2:
+                            target_angle_degrees = float(parts[1].strip())
+                        if len(parts) >= 3:
+                            delta_angle = float(parts[2].strip())
+                    else:
+                        # Assume format: "target_angle:delta_angle"
+                        target_angle_degrees = float(parts[0].strip())
+                        if len(parts) >= 2:
+                            delta_angle = float(parts[1].strip())
+                except (ValueError, IndexError):
+                    self.get_logger().warn(f'Invalid angle values in turn_towards command: {data}, using defaults')
+            else:
+                # Position-based mode: "ANCHOR:delta_angle"
+                anchor_key = first_part
+                try:
+                    if len(parts) >= 2:
+                        delta_angle = float(parts[1].strip())
+                except (ValueError, IndexError):
+                    self.get_logger().warn(f'Invalid delta_angle in turn_towards command: {data}, using default')
+        else:
+            # Simple format: just anchor name
+            anchor_key = data.strip().upper()
         
-        current_pos, current_quat = self._get_robot_pose()
-        distance = np.linalg.norm(np.array(target_pos[:2]) - current_pos[:2])
-        
-        # Calculate desired angle to target
-        diff = np.array(target_pos[:2]) - current_pos[:2]
-        desired_angle = math.atan2(diff[1], diff[0])
-        
-        # Use turn-only mode (no linear movement)
-        self.nav_controller.set_turn_only_target(target_pos)
-        self.manual_control = False
-        
-        self.get_logger().info(
-            f'Turning towards anchor {anchor_key} at {target_pos} '
-            f'(distance: {distance:.2f}m, target angle: {math.degrees(desired_angle):.1f}°)'
-        )
+        self._handle_anchor_command(anchor_key, turn_only=True, delta_angle=delta_angle,
+                                   target_angle_degrees=target_angle_degrees)
     
     def _navigate_to_position_callback(self, msg):
-        """Handle navigate to position command."""
+        """Handle navigate to position command: [x, y, direction?, speed_percent?]."""
         if len(msg.data) < 2:
             self.get_logger().warn('Position command requires at least x and y coordinates')
             return
         
         x, y = float(msg.data[0]), float(msg.data[1])
-        target_pos = [x, y, 0.0]  # Z is typically 0 for ground navigation
+        target_pos = [x, y, 0.0]
         target_direction = float(msg.data[2]) if len(msg.data) > 2 else None
-        speed_percent = float(msg.data[3]) if len(msg.data) > 3 else 50.0
-        speed_percent = max(0.0, min(100.0, speed_percent))  # Clamp to 0-100
+        speed_percent = self._clamp_speed(msg.data[3] if len(msg.data) > 3 else DEFAULT_SPEED)
         
         current_pos, _ = self._get_robot_pose()
         distance = np.linalg.norm(np.array(target_pos[:2]) - current_pos[:2])
@@ -364,14 +421,22 @@ class StretchSimNode(Node):
         self.nav_controller.set_target(target_pos, target_direction)
         self.manual_control = False
         
-        # Store speed percentage for navigation (would affect MAX_LINEAR_VEL in navigation controller)
-        # For now, we log it but navigation uses default speed
         direction_info = f", direction={math.degrees(target_direction):.1f}°" if target_direction else ""
-        speed_info = f", speed={speed_percent}%" if speed_percent != 50.0 else ""
-        self.get_logger().info(
-            f'Navigating to position ({x}, {y}) '
-            f'(distance: {distance:.2f}m{direction_info}{speed_info})'
-        )
+        speed_info = f", speed={speed_percent}%" if speed_percent != DEFAULT_SPEED else ""
+        self.get_logger().info(f'Navigating to ({x}, {y}) (distance: {distance:.2f}m{direction_info}{speed_info})')
+    
+    def _cmd_vel_callback(self, msg):
+        """Handle base velocity commands."""
+        has_manual_input = abs(msg.linear.x) > 0.05 or abs(msg.angular.z) > 0.05
+        
+        if has_manual_input and self.nav_controller.is_active():
+            self.manual_control = True
+            self.nav_controller.cancel()
+            self.get_logger().info('Manual control override')
+        
+        linear_x = 0.0 if abs(msg.linear.x) < 0.001 and abs(msg.angular.z) > 0.001 else msg.linear.x
+        self.ctrl_state['forward'] = linear_x
+        self.ctrl_state['turn'] = msg.angular.z
     
     def _get_robot_pose(self):
         """Get current robot position and orientation."""
@@ -395,11 +460,10 @@ class StretchSimNode(Node):
         )
         angle_error_deg = np.degrees(abs(angle_error))
         aligned = angle_error_deg <= 10.0
-        actual_ctrl = self.ctrl_state.get('forward', 0.0)
         
         self.get_logger().info(
             f'Nav: dist={distance:.2f}m, lin={linear_vel:.2f} m/s, '
-            f'ctrl={actual_ctrl:.3f}, ang={angular_vel:.2f}, '
+            f'ctrl={self.ctrl_state.get("forward", 0.0):.3f}, ang={angular_vel:.2f}, '
             f'err={angle_error_deg:.1f}°, aligned={aligned}'
         )
     
@@ -419,8 +483,6 @@ class StretchSimNode(Node):
         if self._nav_log_counter % (10 if abs(linear_vel) > 0.01 else 50) == 0:
             self._log_navigation_status(pos, quat, linear_vel, angular_vel)
         
-        # Ensure forward is exactly 0 when turning in place (only angular velocity)
-        # This prevents pivoting around one wheel
         if abs(linear_vel) < 0.001 and abs(angular_vel) > 0.001:
             linear_vel = 0.0
         
@@ -470,7 +532,7 @@ class StretchSimNode(Node):
         self.joint_state_pub.publish(msg)
     
     def _render_camera(self):
-        """Render camera view and display it."""
+        """Render camera view and publish it."""
         if self.camera_id is None or self.camera_renderer is None:
             return
         

@@ -18,17 +18,20 @@ micro_actions:
   # Navigation actions
   - name: "go_to_anchor"
     type: "navigation"
-    description: "Navigate to a specific anchor point (A, B, C, D, E, F, ORIGIN) (Usage: go_to_anchor anchor=A speed=0.5)"
+    description: "Navigate to a specific anchor point without turning (A, B, C, D, E, F, ORIGIN) (Usage: go_to_anchor anchor=A speed=0.5 position_tolerance=0.15)"
     parameters:
       anchor: "string"  # Anchor identifier: A, B, C, D, E, F, or ORIGIN
       speed: "float"  # Optional: Speed 0-1 (default: 0.5). 0=min, 0.5=middle, 1=max
+      position_tolerance: "float"  # Optional: Position tolerance in meters (default: 0.15). Action completes when within this distance of target
     
   - name: "turn_towards"
     type: "navigation"
-    description: "Turn robot towards a specific anchor without moving (Usage: turn_towards anchor=ORIGIN speed=0.5)"
+    description: "Turn robot towards a specific anchor or absolute angle without moving (Usage: turn_towards anchor=ORIGIN speed=0.5 delta_angle=5.0 OR turn_towards degrees=90.0 speed=0.5 delta_angle=5.0)"
     parameters:
-      anchor: "string"  # Anchor identifier: A, B, C, D, E, F, or ORIGIN
+      anchor: "string"  # Anchor identifier: A, B, C, D, E, F, or ORIGIN (mutually exclusive with degrees)
+      degrees: "float"  # Optional: Absolute target angle in degrees (0-360). Mutually exclusive with anchor. If specified, robot turns to this absolute heading
       speed: "float"  # Optional: Speed 0-1 (default: 0.5). 0=min, 0.5=middle, 1=max
+      delta_angle: "float"  # Optional: Delta angle in degrees (default: 5.0). Action completes when within this angle of target heading
     
   - name: "go_to_position"
     type: "navigation"
@@ -119,22 +122,65 @@ macro_actions:
     sequence:
       - action: "reset_arm"
         parameters:
-          speed: 0.07
+          speed: 0.01
       - action: "turn_towards"
         parameters:
           anchor: "ORIGIN"
           speed: 0.5
       - action: "wait"
         parameters:
-          duration: 10
+          duration: 0
       - action: "go_to_anchor"
         parameters:
           anchor: "D"
           speed: 0.9
-      # TODO: Define sequence of actions
-      # Example structure:
-      # - action: "go_to_anchor"
-      #   parameters:
+      - action: "wait"
+        parameters:
+          duration: 0
+      - action: "turn_towards"
+        parameters:
+          degrees: 270
+          speed: 0.5
+          delta_angle:5
+      - action: "rotate_wrist"
+        parameters:
+          angle: 0.33
+          speed: 0.02
+      - action: "wait"
+        parameters:
+          duration: 1.0
+      - action: "extend_arm"
+        parameters:
+          length: 0.4
+          speed: 0.01
+      - action: "wait"
+        parameters:
+          duration: 1.0
+      - action: "set_gripper"
+        parameters:
+          width: 0.9
+          speed: 0.01
+      - action: "wait"
+        parameters:
+          duration: 1.0
+      - action: "elevate_arm"
+        parameters:
+          height: 0.56
+          speed: 0.01
+      - action: "wait"
+        parameters:
+          duration: 5.0
+      - action: "set_gripper"
+        parameters:
+          width: 0.0
+          speed: 0.01
+      - action: "wait"
+        parameters:
+          duration: 1.0
+      - action: "elevate_arm"
+        parameters:
+          height: 0.8
+          speed: 0.01
       #     anchor: "B"  # Example anchor near tomatoes
       # - action: "reset_arm"
       # - action: "elevate_arm"
@@ -153,7 +199,7 @@ macro_actions:
     sequence:
       - action: "reset_arm"
         parameters:
-          speed: 0.07
+          speed: 0.01
       - action: "turn_towards"
         parameters:
           anchor: "ORIGIN"
@@ -176,7 +222,7 @@ macro_actions:
     sequence:
       - action: "reset_arm"
         parameters:
-          speed: 0.07
+          speed: 0.01
       - action: "turn_towards"
         parameters:
           anchor: "ORIGIN"
@@ -199,7 +245,7 @@ macro_actions:
     sequence:
       - action: "reset_arm"
         parameters:
-          speed: 0.07
+          speed: 0.01
       - action: "turn_towards"
         parameters:
           anchor: "ORIGIN"
@@ -222,7 +268,7 @@ macro_actions:
     sequence:
       - action: "reset_arm"
         parameters:
-          speed: 0.07
+          speed: 0.01
       - action: "turn_towards"
         parameters:
           anchor: "ORIGIN"

@@ -7,37 +7,40 @@
   <quality shadowsize="0" /> <global offwidth="640" offheight="480" /> </visual>
 
   <asset>
+    <!-- Tomato: visual mesh (original) and convex collision meshes -->
     <mesh name="tomato" file="../meshes/tomato.stl" scale="0.006 0.006 0.006"/>
-    <material name="tomato_mat" rgba="0.8 0.1 0.1 1"/>
+    <mesh name="tomato_convex_0" file="../meshes/convex/tomato_convex_000.stl" scale="0.006 0.006 0.006"/>
+    <mesh name="tomato_convex_1" file="../meshes/convex/tomato_convex_001.stl" scale="0.006 0.006 0.006"/>
+    <material name="tomato_mat" rgba="0.8 0.1 0.1 1" reflectance="0"/>
     <mesh name="onion" file="../meshes/onion.stl" scale="0.006 0.006 0.006"/>
-    <material name="onion_mat" rgba="0.7 0.5 0.3 1"/>
+    <material name="onion_mat" rgba="0.7 0.5 0.3 1" reflectance="0"/>
     <mesh name="lettuce" file="../meshes/lettuce.stl" scale="0.006 0.006 0.006"/>
-    <material name="lettuce_mat" rgba="0.2 0.7 0.2 1"/>
+    <material name="lettuce_mat" rgba="0.2 0.7 0.2 1" reflectance="0"/>
     <mesh name="cutting_board" file="../meshes/cutting_board.stl" scale="0.01 0.01 0.01"/>
-    <material name="cutting_board_mat" rgba="0.5 0.3 0.2 1"/>
-    <material name="cutting_board_white_mat" rgba="0.95 0.95 0.95 1"/>
+    <material name="cutting_board_mat" rgba="0.5 0.3 0.2 1" reflectance="0"/>
+    <material name="cutting_board_white_mat" rgba="0.95 0.95 0.95 1" reflectance="0"/>
     <mesh name="knife" file="../meshes/knife.stl" scale="0.00357 0.00357 0.00357"/>
-    <material name="knife_mat" rgba="0.6 0.6 0.65 1" specular="0.8" shininess="0.3" reflectance="0.5"/>
+    <material name="knife_mat" rgba="0.6 0.6 0.65 1" specular="0" shininess="0" reflectance="0"/>
     <mesh name="delivery_area" file="../meshes/delivery_area.stl" scale="0.01 0.01 0.01"/>
     <mesh name="plate" file="../meshes/plate.stl" scale="0.01 0.01 0.01"/>
     <mesh name="table" file="../meshes/table_fixed.obj" scale="1 1 0.55"/>
     <texture name="table_tex" type="2d" file="../textures/Material.001_baseColor.png"/>
-    <material name="table_mat" texture="table_tex"/>
+    <material name="table_mat" texture="table_tex" reflectance="0"/>
     
 <!-- Change this in your <asset> section -->
     <texture name="texplane" type="2d" builtin="flat" rgb1="0.7 0.7 0.7" width="512" height="512"/>
-    <material name="matplane" texture="texplane" texuniform="true" reflectance="0.3"/>
+    <material name="matplane" texture="texplane" texuniform="true" reflectance="0"/>
     <!-- Sky -->
     <texture type="skybox" builtin="gradient" rgb1="0.4 0.6 0.8" rgb2="0.1 0.2 0.3" width="512" height="3072"/>
     
     
     <!-- Wood texture for tables -->
     <texture name="texwood" type="2d" builtin="flat" rgb1="0.6 0.4 0.2" width="256" height="256"/>
-    <material name="matwood" texture="texwood" reflectance="0.1"/>
+    <material name="matwood" texture="texwood" reflectance="0"/>
     
     <!-- Plate texture -->
     <texture name="texplate" type="2d" builtin="flat" rgb1="0.95 0.95 0.95" width="256" height="256"/>
-    <material name="matplate" texture="texplate" reflectance="0.3"/>
+    <material name="matplate" texture="texplate" reflectance="0"/>
   </asset>
   <include file="stretch.xml"/>
   <worldbody>
@@ -63,20 +66,32 @@
     <!-- anchor_ORIGIN direction="0" -->
 
     <!-- Lighting for large space -->
-    <light directional="true" diffuse="0.8 0.8 0.8" specular="0.3 0.3 0.3" pos="0 0 10" dir="0 0 -1" castshadow="true"/>
-    <light directional="true" diffuse="0.4 0.4 0.4" specular="0.1 0.1 0.1" pos="10 10 8" dir="-1 -1 -1"/>
-    <light directional="true" diffuse="0.4 0.4 0.4" specular="0.1 0.1 0.1" pos="-10 10 8" dir="1 -1 -1"/>
+    <light directional="true" diffuse="0.8 0.8 0.8" specular="0 0 0" pos="0 0 10" dir="0 0 -1" castshadow="true"/>
+    <light directional="true" diffuse="0.4 0.4 0.4" specular="0 0 0" pos="10 10 8" dir="-1 -1 -1"/>
+    <light directional="true" diffuse="0.4 0.4 0.4" specular="0 0 0" pos="-10 10 8" dir="1 -1 -1"/>
 
     <!-- Large ground plane -->
     <geom name="floor" type="plane" size="50 50 0.1" material="matplane" condim="3" friction="1 0.5 0.5"/>
 
-    <body name="wall_left" pos="-8 0 1.5">
-     <geom name="wall_left_geom" type="box" size="0.1 8 1.5" rgba="0.9 0.9 0.85 1" friction="0.8 0.5 0.5"/>
+    <!-- Walls around tables -->
+    <!-- Left wall (west) -->
+    <body name="wall_left" pos="-2.0 2.5 0.25">
+      <geom name="wall_left_geom" type="box" size="0.05 3.5 0.25" rgba="0.9 0.9 0.85 1" friction="0.8 0.5 0.5"/>
     </body>
 
-<!-- Wall 2: Back wall (parallel to X-axis) -->
-    <body name="wall_back" pos="0 -8 1.5">
-      <geom name="wall_back_geom" type="box" size="8 0.1 1.5" rgba="0.9 0.9 0.85 1" friction="0.8 0.5 0.5"/>
+    <!-- Right wall (east) -->
+    <body name="wall_right" pos="4.0 2.5 0.25">
+      <geom name="wall_right_geom" type="box" size="0.05 3.5 0.25" rgba="0.9 0.9 0.85 1" friction="0.8 0.5 0.5"/>
+    </body>
+
+    <!-- Front wall (south) -->
+    <body name="wall_front" pos="1.0 -1.0 0.25">
+      <geom name="wall_front_geom" type="box" size="3.0 0.05 0.25" rgba="0.9 0.9 0.85 1" friction="0.8 0.5 0.5"/>
+    </body>
+
+    <!-- Back wall (north) -->
+    <body name="wall_back" pos="1.0 6.0 0.25">
+      <geom name="wall_back_geom" type="box" size="3.0 0.05 0.25" rgba="0.9 0.9 0.85 1" friction="0.8 0.5 0.5"/>
     </body>
     <!-- TABLE 1: Robot side (at origin) -->
     <body name="table1" pos="0 0 0">
@@ -131,19 +146,28 @@
     </body>
 
     <!-- Tomato cluster (right side of table 2) - rotated 90 degrees around Z-axis -->
+    <!-- Using convex decomposition: visual mesh + collision geoms for each convex hull -->
     <body name="tomato1" pos="0.43 4.1 0.65">
       <joint type="free" damping="0.05"/>
-      <geom name="tomato1_geom" type="mesh" mesh="tomato" material="tomato_mat" mass="0.13" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <!-- Visual mesh (original) -->
+      <geom name="tomato1_visual" type="mesh" mesh="tomato" material="tomato_mat" contype="0" conaffinity="0" group="2"/>
+      <!-- Collision geoms (convex hulls) -->
+      <geom name="tomato1_collision_0" type="mesh" mesh="tomato_convex_0" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="tomato1_collision_1" type="mesh" mesh="tomato_convex_1" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
     
     <body name="tomato2" pos="0.65 4.1 0.65">
       <joint type="free" damping="0.05"/>
-      <geom name="tomato2_geom" type="mesh" mesh="tomato" material="tomato_mat" mass="0.13" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="tomato2_visual" type="mesh" mesh="tomato" material="tomato_mat" contype="0" conaffinity="0" group="2"/>
+      <geom name="tomato2_collision_0" type="mesh" mesh="tomato_convex_0" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="tomato2_collision_1" type="mesh" mesh="tomato_convex_1" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
     
     <body name="tomato3" pos="0.87 4.1 0.65">
       <joint type="free" damping="0.05"/>
-      <geom name="tomato3_geom" type="mesh" mesh="tomato" material="tomato_mat" mass="0.13" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="tomato3_visual" type="mesh" mesh="tomato" material="tomato_mat" contype="0" conaffinity="0" group="2"/>
+      <geom name="tomato3_collision_0" type="mesh" mesh="tomato_convex_0" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="tomato3_collision_1" type="mesh" mesh="tomato_convex_1" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
 
     <body name="table2" pos="0 4.5 0">
