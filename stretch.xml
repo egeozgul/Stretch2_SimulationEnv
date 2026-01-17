@@ -295,6 +295,7 @@
                       pos="0 0.047231 0.04679" gravcomp="1">
                       <joint name="joint_gripper_slide" class="finger_slide"/>
                       <geom type="box" size=".03 .005 .005" mass=".05" class="visual" rgba="0 0 0 0"/>
+                      <site name="ee_site" pos="0.171 0 0.012" size="0.01" rgba="1 0 0 1"/>
                       <body name="link_gripper_finger_left" pos="0 0.0101513 0" gravcomp="1">
                         <joint name="joint_gripper_finger_left_open" class="finger_open"/>
                         <geom mesh="link_gripper_finger_left_0" material="Reflective_Metal" class="visual"

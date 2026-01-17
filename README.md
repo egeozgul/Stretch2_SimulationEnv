@@ -154,3 +154,12 @@ Stretch2_SimulationEnv/
 - [Stretch 2 Documentation](https://docs.hello-robot.com/)
 - [MuJoCo Documentation](https://mujoco.readthedocs.io/)
 - [ROS 2 Documentation](https://docs.ros.org/)
+
+
+
+## For ege
+
+1.run the ./run_ros2_sim.sh
+2.ros2 topic pub --once /stretch/macro_action std_msgs/String "data: 'tomato2'"
+3.modify tomato1,2,3 as per.
+

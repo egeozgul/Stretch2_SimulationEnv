@@ -8,10 +8,14 @@
 
   <asset>
     <!-- Tomato: visual mesh (original) and convex collision meshes -->
-    <mesh name="tomato" file="../meshes/tomato.stl" scale="0.006 0.006 0.006"/>
+    <!--<mesh name="tomato" file="../meshes/tomato.stl" scale="0.006 0.006 0.006"/>
     <mesh name="tomato_convex_0" file="../meshes/convex/tomato_convex_000.stl" scale="0.006 0.006 0.006"/>
     <mesh name="tomato_convex_1" file="../meshes/convex/tomato_convex_001.stl" scale="0.006 0.006 0.006"/>
-    <material name="tomato_mat" rgba="0.8 0.1 0.1 1" reflectance="0"/>
+
+    <material name="tomato_mat" rgba="0.8 0.1 0.1 1" reflectance="0"/>-->
+    <mesh name="tomato" file="../meshes/tomat.obj" scale="0.09 0.09 0.09"/>
+    <texture name="tomato_tex" type="2d" file="../textures/material0_baseColor.png"/>
+    <material name="tomato_mat" texture="tomato_tex"/>
     <mesh name="onion" file="../meshes/onion.stl" scale="0.006 0.006 0.006"/>
     <material name="onion_mat" rgba="0.7 0.5 0.3 1" reflectance="0"/>
     <mesh name="lettuce" file="../meshes/lettuce.stl" scale="0.006 0.006 0.006"/>
@@ -49,7 +53,8 @@
     
     <site name="anchor_B" pos="0.65 1.1 0.00" size="0.075" rgba="1 0 0 0.5" type="sphere"/>
     <!-- anchor_B direction="0" -->
-
+    <site name="anchor_G" pos="0.65 3.6 0.00" size="0.075" rgba="1 0 0 0.5" type="sphere"/>
+    <!-- anchor_G direction="90" -->
     <site name="anchor_C" pos="-0.65 3.6 0.00" size="0.075" rgba="1 0 0 0.5" type="sphere"/>
     <!-- anchor_C direction="180" -->
 
@@ -125,6 +130,7 @@
     <body name="cutting_board1" pos="0.65 0.5 0.65">
       <joint type="free" damping="0.01"/>
       <geom name="cutting_board1_geom" type="mesh" mesh="cutting_board" material="cutting_board_mat" mass="0.5" friction="0.8 0.5 0.5"/>
+      <site name="cutting_board1_center" pos="0 -0.2 0.02" size="0.015" rgba="0 0 1 1"/>
     </body>
 
     
@@ -147,11 +153,11 @@
 
     <!-- Tomato cluster (right side of table 2) - rotated 90 degrees around Z-axis -->
     <!-- Using convex decomposition: visual mesh + collision geoms for each convex hull -->
-    <body name="tomato1" pos="0.43 4.1 0.65">
+    <!--<body name="tomato1" pos="0.43 4.1 0.65">
       <joint type="free" damping="0.05"/>
-      <!-- Visual mesh (original) -->
+     
       <geom name="tomato1_visual" type="mesh" mesh="tomato" material="tomato_mat" contype="0" conaffinity="0" group="2"/>
-      <!-- Collision geoms (convex hulls) -->
+      
       <geom name="tomato1_collision_0" type="mesh" mesh="tomato_convex_0" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
       <geom name="tomato1_collision_1" type="mesh" mesh="tomato_convex_1" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
@@ -161,6 +167,7 @@
       <geom name="tomato2_visual" type="mesh" mesh="tomato" material="tomato_mat" contype="0" conaffinity="0" group="2"/>
       <geom name="tomato2_collision_0" type="mesh" mesh="tomato_convex_0" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
       <geom name="tomato2_collision_1" type="mesh" mesh="tomato_convex_1" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      
     </body>
     
     <body name="tomato3" pos="0.87 4.1 0.65">
@@ -168,8 +175,24 @@
       <geom name="tomato3_visual" type="mesh" mesh="tomato" material="tomato_mat" contype="0" conaffinity="0" group="2"/>
       <geom name="tomato3_collision_0" type="mesh" mesh="tomato_convex_0" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
       <geom name="tomato3_collision_1" type="mesh" mesh="tomato_convex_1" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+    </body>-->
+    <body name="tomato1" pos="0.43 4.1 0.65">
+      <joint type="free" damping="0.001"/>
+      <geom name="tomato1_geom" type="mesh" mesh="tomato" material="tomato_mat" mass="0.13" friction="1.5 0.8 0.8"/>
+      <site name="tomato1_site" pos="0 0 0.02" size="0.01" rgba="1 0 0 1"/>
     </body>
-
+    
+    <body name="tomato2" pos="0.65 4.1 0.65">
+      <joint type="free" damping="0.001"/>
+      <geom name="tomato2_geom" type="mesh" mesh="tomato" material="tomato_mat" mass="0.13" friction="1.5 0.8 0.8"/>
+      <site name="tomato2_site" pos="0 0 0.02" size="0.01" rgba="1 1 0 1"/>
+    </body>
+    
+    <body name="tomato3" pos="0.87 4.1 0.65">
+      <joint type="free" damping="0.001"/>
+      <geom name="tomato3_geom" type="mesh" mesh="tomato" material="tomato_mat" mass="0.13" friction="1.5 0.8 0.8"/>
+      <site name="tomato3_site" pos="0 0 0.02" size="0.01" rgba="1 0 0 1"/>
+    </body>
     <body name="table2" pos="0 4.5 0">
       <geom name="table2_geom" type="mesh" mesh="table" material="table_mat" friction="0.8 0.5 0.5"/>
     </body>

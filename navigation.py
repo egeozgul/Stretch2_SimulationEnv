@@ -9,8 +9,8 @@ POSITION_TOLERANCE = 0.15  # meters
 ALIGNMENT_THRESHOLD = math.radians(15)  # degrees
 MAX_ANGLE_FOR_MOVEMENT = math.radians(45)  # degrees
 DIRECTION_TOLERANCE = math.radians(5)  # degrees
-MAX_LINEAR_VEL = 2.5  # m/s
-MAX_ANGULAR_VEL = 2.0  # rad/s
+MAX_LINEAR_VEL = 1.5  # m/s
+MAX_ANGULAR_VEL = 1.0  # rad/s
 K_P_ANGULAR = 2.0
 
 
@@ -32,7 +32,7 @@ class NavigationController:
         self._turn_only_start_time = None
         self._navigation_start_time = None
     
-    def set_target(self, target_pos, target_direction=None, position_tolerance=None, direction_tolerance=None):
+    def set_target(self, target_pos, target_direction=None, position_tolerance=0.3, direction_tolerance=None):
         """
         Set target position and optional direction.
         
