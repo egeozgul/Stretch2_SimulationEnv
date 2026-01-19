@@ -166,8 +166,8 @@
     <body name="tomato3" pos="0.87 4.1 0.65">
       <joint type="free" damping="0.05"/>
       <geom name="tomato3_visual" type="mesh" mesh="tomato" material="tomato_mat" contype="0" conaffinity="0" group="2"/>
-      <geom name="tomato3_collision_0" type="mesh" mesh="tomato_convex_0" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
-      <geom name="tomato3_collision_1" type="mesh" mesh="tomato_convex_1" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="tomato3_collision_0" group="3" type="mesh" mesh="tomato_convex_0" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="tomato3_collision_1" group="3"type="mesh" mesh="tomato_convex_1" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
 
     <body name="table2" pos="0 4.5 0">

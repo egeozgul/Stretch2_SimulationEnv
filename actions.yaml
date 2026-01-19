@@ -141,7 +141,7 @@ macro_actions:
         parameters:
           degrees: 270
           speed: 0.5
-          delta_angle:5
+          delta_angle: 5
       - action: "rotate_wrist"
         parameters:
           angle: 0.33
