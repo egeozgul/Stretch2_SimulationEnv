@@ -8,14 +8,17 @@
 
   <asset>
     <!-- Tomato: visual mesh (original) and convex collision meshes -->
-    <!--<mesh name="tomato" file="../meshes/tomato.stl" scale="0.006 0.006 0.006"/>
+    <mesh name="tomato" file="../meshes/tomato.stl" scale="0.006 0.006 0.006"/>
+	
     <mesh name="tomato_convex_0" file="../meshes/convex/tomato_convex_000.stl" scale="0.006 0.006 0.006"/>
     <mesh name="tomato_convex_1" file="../meshes/convex/tomato_convex_001.stl" scale="0.006 0.006 0.006"/>
-
-    <material name="tomato_mat" rgba="0.8 0.1 0.1 1" reflectance="0"/>-->
-    <mesh name="tomato" file="../meshes/tomat.obj" scale="0.09 0.09 0.09"/>
-    <texture name="tomato_tex" type="2d" file="../textures/material0_baseColor.png"/>
-    <material name="tomato_mat" texture="tomato_tex"/>
+	<mesh name="lettuce_convex_0" file="../meshes/convex/lettuce_convex_000.stl" scale="0.006 0.006 0.006"/>
+    <mesh name="lettuce_convex_1" file="../meshes/convex/lettuce_convex_001.stl" scale="0.006 0.006 0.006"/>
+	<mesh name="onion_convex_0" file="../meshes/convex/onion_convex_000.stl" scale="0.006 0.006 0.006"/>
+    <mesh name="onion_convex_1" file="../meshes/convex/onion_convex_001.stl" scale="0.006 0.006 0.006"/>
+	
+	
+    <material name="tomato_mat" rgba="0.8 0.1 0.1 1" reflectance="0"/>
     <mesh name="onion" file="../meshes/onion.stl" scale="0.006 0.006 0.006"/>
     <material name="onion_mat" rgba="0.7 0.5 0.3 1" reflectance="0"/>
     <mesh name="lettuce" file="../meshes/lettuce.stl" scale="0.006 0.006 0.006"/>
@@ -48,13 +51,12 @@
   </asset>
   <include file="stretch.xml"/>
   <worldbody>
-    <site name="anchor_A" pos="-0.65 1.1 0.00" size="0.075" rgba="0 1 0 0.5" type="sphere"/>
+    <site name="anchor_A" pos="-0.65 0.9 0.00" size="0.075" rgba="0 1 0 0.5" type="sphere"/>
     <!-- anchor_A direction="0" -->
     
-    <site name="anchor_B" pos="0.65 1.1 0.00" size="0.075" rgba="1 0 0 0.5" type="sphere"/>
+    <site name="anchor_B" pos="0.65 0.9 0.00" size="0.075" rgba="1 0 0 0.5" type="sphere"/>
     <!-- anchor_B direction="0" -->
-    <site name="anchor_G" pos="0.65 3.6 0.00" size="0.075" rgba="1 0 0 0.5" type="sphere"/>
-    <!-- anchor_G direction="90" -->
+
     <site name="anchor_C" pos="-0.65 3.6 0.00" size="0.075" rgba="1 0 0 0.5" type="sphere"/>
     <!-- anchor_C direction="180" -->
 
@@ -105,20 +107,35 @@
 
     <!-- table 1 elements-->
     <!-- Lettuce cluster (left side of table 1) - rotated 90 degrees around Z-axis -->
-    <body name="lettuce1" pos="-0.43 0.7 0.65">
+    <body name="lettuce1" pos="-0.43 0.5 0.65">
       <joint type="free" damping="0.05"/>
-      <geom name="lettuce1_geom" type="mesh" mesh="lettuce" material="lettuce_mat" mass="0.15" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="lettuce1_collision_0" type="mesh" mesh="lettuce_convex_0" material="lettuce_mat" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="lettuce1_collision_1" type="mesh" mesh="lettuce_convex_1" material="lettuce_mat" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+	  <site name="lettuce1_site" pos="0.015 -0.02 -0.016" size="0.01" rgba="1 0 0 1"/>
     </body>
     
-    <body name="lettuce2" pos="-0.65 0.7 0.65">
+    <body name="lettuce2" pos="-0.65 0.5 0.65">
       <joint type="free" damping="0.05"/>
-      <geom name="lettuce2_geom" type="mesh" mesh="lettuce" material="lettuce_mat" mass="0.15" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="lettuce2_collision_0" type="mesh" mesh="lettuce_convex_0" material="lettuce_mat" mass="0.065" friction="10.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="lettuce2_collision_1" type="mesh" mesh="lettuce_convex_1" material="lettuce_mat" mass="0.065" friction="10.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+	  <site name="lettuce2_site" pos="0.015 -0.02 -0.016" size="0.01" rgba="1 0 0 1"/>
     </body>
     
-    <body name="lettuce3" pos="-0.87 0.7 0.65">
+    <body name="lettuce3" pos="-0.87 0.5 0.65">
       <joint type="free" damping="0.05"/>
-      <geom name="lettuce3_geom" type="mesh" mesh="lettuce" material="lettuce_mat" mass="0.15" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="lettuce3_collision_0" type="mesh" mesh="lettuce_convex_0" material="lettuce_mat" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="lettuce3_collision_1" type="mesh" mesh="lettuce_convex_1" material="lettuce_mat" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+	  <site name="lettuce3_site" pos="0.01 -0.03 -0.016" size="0.01" rgba="1 0 0 1"/>
     </body>
+
+
+
+
+
+
+
+
+
 
     <!-- Knife in the middle of table 1 -->
     <body name="knife1" pos="0 0 0.65">
@@ -130,69 +147,63 @@
     <body name="cutting_board1" pos="0.65 0.5 0.65">
       <joint type="free" damping="0.01"/>
       <geom name="cutting_board1_geom" type="mesh" mesh="cutting_board" material="cutting_board_mat" mass="0.5" friction="0.8 0.5 0.5"/>
-      <site name="cutting_board1_center" pos="0 -0.2 0.02" size="0.015" rgba="0 0 1 1"/>
+      <site name="cut_site" pos="0 -0.3 0.06" size="0.02" rgba="1 0 0 1"/>
     </body>
 
     
     <!-- table 2 elements-->
     <!-- Onion cluster (left side of table 2) - rotated 90 degrees around Z-axis -->
-    <body name="onion1" pos="-0.43 4.1 0.65">
+    <body name="onion1" pos="-0.43 4 0.65">
       <joint type="free" damping="0.05"/>
-      <geom name="onion1_geom" type="mesh" mesh="onion" material="onion_mat" mass="0.15" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="onion1_collision_0" type="mesh" mesh="onion_convex_0" material="onion_mat" mass="0.065" friction="10.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="onion1_collision_1" type="mesh" mesh="onion_convex_1" material="onion_mat" mass="0.065" friction="10.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <site name="onion1_site" pos="-0.01 0.025 -0.02" size="0.01" rgba="1 0 0 1"/>
+
+	</body>
+    
+    <body name="onion2" pos="-0.65 4 0.65">
+      <joint type="free" damping="0.05"/>
+      <geom name="onion2_collision_0" type="mesh" mesh="onion_convex_0" material="onion_mat" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="onion2_collision_1" type="mesh" mesh="onion_convex_1" material="onion_mat" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <site name="onion2_site" pos="-0.015 0.02 -0.02" size="0.01" rgba="1 0 0 1"/>
     </body>
     
-    <body name="onion2" pos="-0.65 4.1 0.65">
+    <body name="onion3" pos="-0.87 4 0.65">
       <joint type="free" damping="0.05"/>
-      <geom name="onion2_geom" type="mesh" mesh="onion" material="onion_mat" mass="0.15" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="onion3_collision_0" type="mesh" mesh="onion_convex_0" material="onion_mat" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="onion3_collision_1" type="mesh" mesh="onion_convex_1" material="onion_mat" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <site name="onion3_site" pos="-0.015 0.02 -0.02" size="0.01" rgba="1 0 0 1"/>
     </body>
-    
-    <body name="onion3" pos="-0.87 4.1 0.65">
-      <joint type="free" damping="0.05"/>
-      <geom name="onion3_geom" type="mesh" mesh="onion" material="onion_mat" mass="0.15" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
-    </body>
+
+
+
+
+
 
     <!-- Tomato cluster (right side of table 2) - rotated 90 degrees around Z-axis -->
     <!-- Using convex decomposition: visual mesh + collision geoms for each convex hull -->
-    <!--<body name="tomato1" pos="0.43 4.1 0.65">
+    <body name="tomato1" pos="0.43 4 0.65">
       <joint type="free" damping="0.05"/>
-     
-      <geom name="tomato1_visual" type="mesh" mesh="tomato" material="tomato_mat" contype="0" conaffinity="0" group="2"/>
-      
-      <geom name="tomato1_collision_0" type="mesh" mesh="tomato_convex_0" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
-      <geom name="tomato1_collision_1" type="mesh" mesh="tomato_convex_1" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="tomato1_collision_0" type="mesh" mesh="tomato_convex_0" material="tomato_mat" mass="0.065" friction="10.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="tomato1_collision_1" type="mesh" mesh="tomato_convex_1" material="tomato_mat" mass="0.065" friction="10.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+	  <site name="tomato1_site" pos="-0.015 0.02 -0.02" size="0.01" rgba="1 0 0 1"/>
     </body>
     
-    <body name="tomato2" pos="0.65 4.1 0.65">
+    <body name="tomato2" pos="0.65 4 0.65">
       <joint type="free" damping="0.05"/>
-      <geom name="tomato2_visual" type="mesh" mesh="tomato" material="tomato_mat" contype="0" conaffinity="0" group="2"/>
-      <geom name="tomato2_collision_0" type="mesh" mesh="tomato_convex_0" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
-      <geom name="tomato2_collision_1" type="mesh" mesh="tomato_convex_1" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
-      
+      <geom name="tomato2_collision_0" type="mesh" mesh="tomato_convex_0" material="tomato_mat" mass="0.065" friction="10.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="tomato2_collision_1" type="mesh" mesh="tomato_convex_1" material="tomato_mat" mass="0.065" friction="10.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+	  <site name="tomato2_site" pos="-0.015 0.02 -0.02" size="0.01" rgba="1 0 0 1"/>
     </body>
     
-    <body name="tomato3" pos="0.87 4.1 0.65">
+    <body name="tomato3" pos="0.87 4 0.65">
       <joint type="free" damping="0.05"/>
-      <geom name="tomato3_visual" type="mesh" mesh="tomato" material="tomato_mat" contype="0" conaffinity="0" group="2"/>
-      <geom name="tomato3_collision_0" type="mesh" mesh="tomato_convex_0" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
-      <geom name="tomato3_collision_1" type="mesh" mesh="tomato_convex_1" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
-    </body>-->
-    <body name="tomato1" pos="0.43 4.1 0.65">
-      <joint type="free" damping="0.001"/>
-      <geom name="tomato1_geom" type="mesh" mesh="tomato" material="tomato_mat" mass="0.13" friction="1.5 0.8 0.8"/>
-      <site name="tomato1_site" pos="0 0 0.02" size="0.01" rgba="1 0 0 1"/>
+      <geom name="tomato3_collision_0" type="mesh" mesh="tomato_convex_0" material="tomato_mat" mass="0.065" friction="10.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="tomato3_collision_1" type="mesh" mesh="tomato_convex_1" material="tomato_mat" mass="0.065" friction="10.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+	  <site name="tomato3_site" pos="-0.01 0.025 -0.02" size="0.01" rgba="1 0 0 1"/>
+
     </body>
-    
-    <body name="tomato2" pos="0.65 4.1 0.65">
-      <joint type="free" damping="0.001"/>
-      <geom name="tomato2_geom" type="mesh" mesh="tomato" material="tomato_mat" mass="0.13" friction="1.5 0.8 0.8"/>
-      <site name="tomato2_site" pos="0 0 0.02" size="0.01" rgba="1 1 0 1"/>
-    </body>
-    
-    <body name="tomato3" pos="0.87 4.1 0.65">
-      <joint type="free" damping="0.001"/>
-      <geom name="tomato3_geom" type="mesh" mesh="tomato" material="tomato_mat" mass="0.13" friction="1.5 0.8 0.8"/>
-      <site name="tomato3_site" pos="0 0 0.02" size="0.01" rgba="1 0 0 1"/>
-    </body>
+
     <body name="table2" pos="0 4.5 0">
       <geom name="table2_geom" type="mesh" mesh="table" material="table_mat" friction="0.8 0.5 0.5"/>
     </body>
@@ -205,24 +216,25 @@
     <!-- Plate cluster -->
     <body name="plate1" pos="2.35 2.5 0.65">
       <joint type="free" damping="0.01"/>
-      <geom name="plate1_geom" type="mesh" mesh="plate" mass="0.1"friction="0.6 0.4 0.4" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="plate1_geom" type="mesh" mesh="plate" mass="0.1" friction="0.6 0.4 0.4" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
     
     <body name="plate2" pos="2.35 2.9 0.65">
       <joint type="free" damping="0.01"/>
-      <geom name="plate2_geom" type="mesh" mesh="plate" mass="0.1"friction="0.6 0.4 0.4" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="plate2_geom" type="mesh" mesh="plate" mass="0.1" friction="0.6 0.4 0.4" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
     
     <body name="plate3" pos="2.35 3.3 0.65">
       <joint type="free" damping="0.01"/>
-      <geom name="plate3_geom" type="mesh" mesh="plate" mass="0.1"friction="0.6 0.4 0.4" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
+      <geom name="plate3_geom" type="mesh" mesh="plate" mass="0.1" friction="0.6 0.4 0.4" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
     </body>
 
 
     
-    <body name="delivery_station" pos="2.4 2.0 0.65">
+    <body name="delivery_station" pos="2.2 2.0 0.65">
       <joint type="free" damping="0.01"/>
       <geom name="delivery_station_geom" type="mesh" mesh="delivery_area" material="cutting_board_white_mat" mass="0.5" friction="0.8 0.5 0.5"/>
+      <site name="plate_site" pos="0 -0.3 0.06" size="0.02" rgba="1 0 0 1"/>
     </body>
 
     

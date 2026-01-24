@@ -117,7 +117,7 @@ class IKSolver:
             ik_data.qpos[14]
         ])
     
-    def align_with_target(self,pos,quat,tomato_name='tomato1'):
+    def align_with_target(self,pos,quat,tomato_name):
 
         current_yaw = self.nav_controller._quaternion_to_yaw(quat)
         '''fruit_body_id = mujoco.mj_name2id(

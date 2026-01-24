@@ -17,7 +17,6 @@ import cv2
 from ik import IKSolver
 from navigation import NavigationController
 from anchor_utils import load_anchors_from_xml
-from controls import LiftPID, ArmExtendPID, WristYawPID
 
 # Joint configuration
 JOINT_NAMES = [
@@ -46,7 +45,7 @@ JOINT_COMMAND_MAP = [
 RESET_POSITIONS = {
     'lift': 0.6,
     'arm_extend': 0.0,
-    'wrist_yaw': (4.0 + -1.75) / 2,  # Middle position (1.125)
+    'wrist_yaw': 0,#(4.0 + -1.75) / 2,  # Middle position (1.125)
     'gripper': 0.04
 }
 
@@ -69,13 +68,14 @@ class StretchSimNode(Node):
         xml_path = os.path.join(os.path.dirname(__file__), 'table_world.xml')
         self.model = mujoco.MjModel.from_xml_path(xml_path)
         self.data = mujoco.MjData(self.model)
-        
+        self._alignment_cancel = False
+        self._alignment_active = False 
         self.anchors = self._load_anchors(xml_path)
         self._init_robot_state()
         self._init_actuators()
         self._init_camera()
         self._setup_ros2()
-        self.ik=IKSolver(self.model,self.data,logger=self.get_logger())
+        
         self.nav_controller = NavigationController()
         self.manual_control = False
         self.running = True
@@ -86,7 +86,7 @@ class StretchSimNode(Node):
         self._joint_targets = {}
         self._joint_speed_percent = {}
         self._base_joint_speed = 0.02
-        self.joint_info = self.get_joint_indices_complete()
+        self.ik_solver=IKSolver(self.model,self.data,logger=self.get_logger())
         self.get_logger().info('Stretch 2 ROS 2 Simulation Node started')
     
     def _load_anchors(self, xml_path):
@@ -151,12 +151,14 @@ class StretchSimNode(Node):
                                 self._reset_arm_callback, 10)
         self.create_subscription(Float64MultiArray, '/stretch/navigate_to_position', 
                                 self._navigate_to_position_callback, 10)
-        self.create_subscription(String, '/stretch/macro_action', 
-                            self._macro_pick_callback, 10)
+        self.create_subscription(String, '/stretch/align_with_target',
+                            self._align_with_target_callback, 10)
+        self.create_subscription(String, '/stretch/compute_ik',  # NEW
+                            self._compute_ik_callback, 10)
         self.joint_state_pub = self.create_publisher(JointState, '/stretch/joint_states', 10)
         self.nav_status_pub = self.create_publisher(Bool, '/stretch/navigation_active', 10)
         self.camera_pub = self.create_publisher(Image, '/stretch/camera/image_raw', 10)
-    
+        self.ik_result_pub = self.create_publisher(Float64MultiArray, '/stretch/ik_result', 10)
     @staticmethod
     def _clamp_speed(speed_percent):
         """Clamp speed percentage to valid range."""
@@ -176,54 +178,68 @@ class StretchSimNode(Node):
         self._joint_targets[actuator_name] = value
         self._joint_speed_percent[actuator_name] = speed_percent
         return True
-    def _macro_pick_callback(self, msg):
-        """
-        Handle macro pick command. 
+    #
+    def _compute_ik_callback(self, msg):
+        """Handle IK computation request for a target object."""
+        target_name = msg.data.strip()
         
-        Format: "tomato1" or "tomato1:G" or "tomato2:D"
+        self.get_logger().info(f'Computing IK for target: {target_name}')
         
-        Examples:
-            - "tomato1" → Uses default anchor G
-            - "tomato2:G" → Pick tomato2, navigate via anchor G
-            - "tomato3:D" → Pick tomato3, navigate via anchor D
-        """
-        data = msg.data.strip().lower()
-        
-        # Parse tomato name and optional anchor
-        if ':' in data:
-            parts = data.split(':')
-            tomato_name = parts[0].strip()
-            anchor_name = parts[1].strip().upper()
-        else:
-            tomato_name = data.strip()
-            anchor_name = 'G'  # Default anchor
-        
-        # Validate tomato name
-        valid_tomatoes = ['tomato1', 'tomato2', 'tomato3']
-        if tomato_name not in valid_tomatoes:
-            self.get_logger().error(f'Invalid tomato name: {tomato_name}. Valid: {valid_tomatoes}')
-            return
-        
-        # Validate anchor exists
-        if anchor_name not in self.anchors:
-            available = ', '.join(sorted(self.anchors.keys()))
-            self.get_logger().error(f'Unknown anchor: {anchor_name}. Available: {available}')
-            return
-        
-        self.get_logger().info(f'🍅 MACRO: Pick {tomato_name} via anchor {anchor_name}')
-        
-        # Reset all state flags
-        for attr in ['_alignment_checked', '_ik_computed', '_stored_q_sol', 
-                    '_pick_stage', '_motion_stage', '_pick_timer']:
-            if hasattr(self, attr):
-                delattr(self, attr)
-        
-        # Store target tomato for the pipeline
-        self._target_tomato = tomato_name
-        self._target_anchor = anchor_name
-        
-        # Start navigation to anchor
-        self._handle_anchor_command(anchor_name, turn_only=False, position_tolerance=None)
+        # Get target object position from site
+        try:
+            target_site_id = mujoco.mj_name2id(
+                self.model, 
+                mujoco.mjtObj.mjOBJ_SITE, 
+                f'{target_name}_site'
+            )
+            
+            if target_site_id < 0:
+                self.get_logger().error(f'Target site {target_name}_site not found')
+                # Publish failure
+                result_msg = Float64MultiArray()
+                result_msg.data = [0.0, 0.0, 0.0, 0.0]  # 0.0 = failure
+                self.ik_result_pub.publish(result_msg)
+                return
+            
+            # Get target position from site
+            target_pos = self.data.site_xpos[target_site_id].copy()
+            
+            self.get_logger().info(f'Target position: {target_pos}')
+            
+            # Compute IK using IKSolver
+            success, joint_solution = self.ik_solver.compute_ik(target_pos)
+            
+            if success:
+                # Extract joint values
+                # joint_solution = [lift, arm_l3, arm_l2, arm_l1, arm_l0, wrist_yaw]
+                q_lift = joint_solution[0]
+                q_arm = sum(joint_solution[1:5])  # Sum of all arm segments
+                q_wrist = joint_solution[5]
+                
+                self.get_logger().info(
+                    f'IK solution: lift={q_lift:.3f}, arm={q_arm:.3f}, wrist={q_wrist:.3f}'
+                )
+                
+                # Publish result: [lift, arm_extend, wrist_yaw, success_flag]
+                result_msg = Float64MultiArray()
+                result_msg.data = [float(q_lift), float(q_arm), float(q_wrist), 1.0]
+                self.ik_result_pub.publish(result_msg)
+            else:
+                self.get_logger().error('IK computation failed')
+                # Publish failure
+                result_msg = Float64MultiArray()
+                result_msg.data = [0.0, 0.0, 0.0, 0.0]
+                self.ik_result_pub.publish(result_msg)
+                
+        except Exception as e:
+            self.get_logger().error(f'IK computation error: {e}')
+            import traceback
+            self.get_logger().error(traceback.format_exc())
+            # Publish failure
+            result_msg = Float64MultiArray()
+            result_msg.data = [0.0, 0.0, 0.0, 0.0]
+            self.ik_result_pub.publish(result_msg)
+    #
     def _joint_command_callback(self, msg):
         """Handle single joint position command: [joint_index, value, speed_percent]."""
         if self._resetting_arm or len(msg.data) < 2:
@@ -315,7 +331,102 @@ class StretchSimNode(Node):
         if all_reached:
             self._resetting_arm = False
             self.get_logger().info('✓ Arm reset complete')
-    
+        #
+    def _align_with_target_callback(self, msg):
+        """Handle alignment with target object command."""
+        data = msg.data.strip()
+        delta_angle = 5.0
+        
+        if ':' in data:
+            parts = data.split(':')
+            target_name = parts[0].strip()
+            try:
+                if len(parts) >= 2:
+                    delta_angle = float(parts[1].strip())
+            except (ValueError, IndexError):
+                self.get_logger().warn(f'Invalid delta_angle in align command: {data}, using default')
+        else:
+            target_name = data.strip()
+        
+        # Cancel any previous alignment
+        self._alignment_cancel = True
+        time.sleep(0.1)
+        
+        # Start new alignment
+        self._alignment_cancel = False
+        self._alignment_active = True
+        threading.Thread(
+            target=self._do_alignment,
+            args=(target_name, delta_angle),
+            daemon=True
+        ).start()
+
+    def _do_alignment(self, target_name, delta_angle):
+        """Do the actual alignment (runs in separate thread)."""
+        try:
+            self.get_logger().info(f'Aligning with target: {target_name}')
+            
+            max_iterations = 10  # ← ADD THIS SAFETY LIMIT
+            
+            for iteration in range(max_iterations):  # ← CHANGE TO FOR LOOP
+                if self._alignment_cancel:
+                    self.get_logger().info('Alignment cancelled')
+                    return
+                
+                pos, quat = self._get_robot_pose()
+                
+                try:
+                    yaw_diff, current_yaw, desired_yaw = self.ik_solver.align_with_target(
+                        pos, quat, tomato_name=target_name
+                    )
+                    
+                    yaw_diff_deg = abs(math.degrees(yaw_diff))
+                    
+                    # Check if aligned
+                    if yaw_diff_deg <= delta_angle:
+                        self.get_logger().info(f'✓ Aligned! Error: {yaw_diff_deg:.2f}° (iteration {iteration+1})')
+                        return
+                    
+                    self.get_logger().info(f'Iteration {iteration+1}: Error {yaw_diff_deg:.1f}°, correcting...')
+                    
+                    # Rotate to correct orientation
+                    self.nav_controller.set_target(
+                        pos.copy(),
+                        desired_yaw + 1.5708,
+                        position_tolerance=0.01,
+                        direction_tolerance=math.radians(delta_angle)
+                    )
+                    self.manual_control = False
+                    
+                    # Wait for rotation to complete
+                    timeout = 10.0
+                    start_time = time.time()
+                    while self.nav_controller.is_active() and not self._alignment_cancel:
+                        if time.time() - start_time > timeout:
+                            self.get_logger().warn('Alignment timeout')
+                            return
+                        time.sleep(0.05)
+                    
+                    if self._alignment_cancel:
+                        self.get_logger().info('Alignment cancelled')
+                        return
+                    
+                    # Small delay for stabilization
+                    time.sleep(0.2)
+                    
+                except Exception as e:
+                    self.get_logger().error(f'Alignment failed: {e}')
+                    return
+            
+            # Max iterations reached
+            pos, quat = self._get_robot_pose()
+            yaw_diff, _, _ = self.ik_solver.align_with_target(pos, quat, tomato_name=target_name)
+            final_error = abs(math.degrees(yaw_diff))
+            self.get_logger().warn(f'Max iterations ({max_iterations}) reached. Final error: {final_error:.2f}°')
+        
+        finally:
+            self._alignment_active = False
+            self.get_logger().info('Alignment thread finished')
     def _update_joint_movements(self):
         """Gradually move joints towards their target positions."""
         if not self._joint_targets:
@@ -389,22 +500,12 @@ class StretchSimNode(Node):
             current_pos, _ = self._get_robot_pose()
             distance = np.linalg.norm(np.array(target_pos[:2]) - current_pos[:2])
             # go_to_anchor no longer does direction alignment
-            #
-            #target_direction = anchor_data.get('direction')
             self.nav_controller.set_target(target_pos, None, position_tolerance, None)
-            #self.nav_controller.set_target(target_pos, target_direction, position_tolerance, None)
             pos_tol_info = f", pos_tol={position_tolerance:.2f}m" if position_tolerance else ""
             self.get_logger().info(f'Navigating to anchor {anchor_key} (distance: {distance:.2f}m{pos_tol_info})')
         
         self.manual_control = False
-        #
-        if hasattr(self, '_alignment_started'):
-            delattr(self, '_alignment_started')
-        if hasattr(self, '_ik_computed'):
-            delattr(self, '_ik_computed')
-        if hasattr(self, '_stored_q_sol'):
-            delattr(self, '_stored_q_sol')
-        #
+    
     def _navigate_to_anchor_callback(self, msg):
         """Handle navigate to anchor command. Format: "ANCHOR" or "ANCHOR:pos_tol"."""
         data = msg.data.strip()
@@ -531,13 +632,9 @@ class StretchSimNode(Node):
     def _update_navigation(self):
         """Update navigation controller and apply its commands."""
         nav_status = Bool()
-        nav_status.data = self.nav_controller.is_active() and not self.manual_control
+        nav_status.data = (self.nav_controller.is_active() or self._alignment_active) and not self.manual_control
         self.nav_status_pub.publish(nav_status)
-        #
-        if hasattr(self, '_stored_q_sol'):
-            self.simple_pick()
-            return
-        #
+        
         if not self.nav_controller.is_active() or self.manual_control:
             return
         
@@ -558,252 +655,8 @@ class StretchSimNode(Node):
             self.get_logger().info('✓ Reached target position!')
             self.ctrl_state['forward'] = 0.0
             self.ctrl_state['turn'] = 0.0
-            #
-            tomato_name = getattr(self, '_target_tomato', 'tomato1')
-                #
-            pos,quat=self._get_robot_pose()
-            yaw_diff, current_yaw, desired = self.ik.align_with_target(pos=pos,quat=quat,tomato_name=tomato_name)
-            self.get_logger().info(f'  current_yaw:  {np.degrees(current_yaw):.2f}° ({current_yaw:.4f} rad)')
-            self.get_logger().info(f'  desired_yaw:  {np.degrees(desired):.2f}° ({desired:.4f} rad)')
-            self.get_logger().info(f'  yaw_diff:     {np.degrees(yaw_diff):.2f}° ({yaw_diff:.4f} rad)')
-            #if not hasattr(self, '_alignment_started'):
-
-            
-            if abs(yaw_diff) > 0.07:
-                self.nav_controller.set_target(pos, target_direction=desired+1.527)
-                #
-                #self._alignment_started = True
-                self.get_logger().info('🔄 Starting alignment rotation...')
-                #return
-                #
-            #else:
-                # Already aligned
-             #   self.get_logger().info('✓ Already aligned!')
-                #self._alignment_started = True
-                #self.get_logger().info('succ')
-            
-            if abs(yaw_diff) < 0.07:
-                self.get_logger().info('🎯 Computing IK...')
-                # Compute IK only once
-                if not hasattr(self, '_ik_computed'):
-                    self.get_logger().info('🎯 Computing IK...')
-                    
-                    '''fruit_body_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, 'tomato2')
-                    
-                    if fruit_body_id >= 0:
-                        fruit_pos = self.data.xpos[fruit_body_id].copy()
-                        self.get_logger().info(f'Actual fruit position: {fruit_pos}')
-                    else:
-                        self.get_logger().error('Fruit body not found!')
-                        fruit_pos = np.array([-1.0, 5.54, 1.05])'''
-                    # Get the site instead of body
-                    fruit_site_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_SITE, f'{tomato_name}_site')
-
-                    if fruit_site_id >= 0:
-                        fruit_pos = self.data.site_xpos[fruit_site_id].copy()
-                        self.get_logger().info(f'Actual fruit site position: {fruit_pos}')
-                    else:
-                        self.get_logger().error('Fruit site not found!')
-                        fruit_pos = np.array([-1.0, 5.54, 1.05])
-
-                    bole, self._q_above=self.ik.compute_ik(target_pos=fruit_pos+np.array([0,0,0.2]), max_iter=300, tol=0.01)
-                    bole2,self._q_grasp =self.ik.compute_ik(target_pos=fruit_pos,max_iter=300,tol=0.01)
-            
-                    
-                    if bole and bole2:
-                        self.get_logger().info(f'Q solution: {self._q_above}')
-                        self._stored_q_sol = self._q_above
-                        self._ik_computed = True
-                        self._pick_stage = 'above'
-                        self._pick_timer = 0
-                        self.nav_controller.cancel()
     
-                    else:
-                        self.get_logger().error('✗ IK failed!')
-                        self.nav_controller.cancel()
-
-    
-    def simple_pick(self):
-        """Simple pick: above → open → down → close → up"""
-        
-        self._pick_timer = getattr(self, '_pick_timer', 0) + 1
-        if self._pick_stage == 'above':
-            self.ctrl_state['grip'] = 0.04
-            self.apply_ik_solution(self._q_above)
-            
-            if self._pick_timer > 1000:  # ~2 seconds
-                self.get_logger().info('✓ Above fruit, descending...')
-                self._pick_stage = 'down'
-                self._pick_timer = 0
-                if hasattr(self, '_motion_stage'):
-                    delattr(self, '_motion_stage')
-        
-        # Stage 2: Descend (gripper open)
-        elif self._pick_stage == 'down':
-            self.ctrl_state['grip'] = 0.04  # Open
-            self.apply_ik_solution(self._q_grasp)
-            
-            if self._pick_timer > 1000:  # ~2 seconds
-                self.get_logger().info('✓ At fruit, closing gripper...')
-                self._pick_stage = 'close'
-                self._pick_timer = 0
-        
-        # Stage 3: Close gripper
-        elif self._pick_stage == 'close':
-            self.ctrl_state['grip'] = 0.01  # Close
-            self.apply_ik_solution(self._q_grasp)
-            
-            if self._pick_timer > 1000:  # ~1 second
-                self.get_logger().info('✓ Grasped, lifting...')
-                self._pick_stage = 'up'
-                self._pick_timer = 0
-                if hasattr(self, '_motion_stage'):
-                    delattr(self, '_motion_stage')
-        
-        # Stage 4: Lift up
-        elif self._pick_stage == 'up':
-            self.ctrl_state['grip'] = 0.01  # Closed
-            self.apply_ik_solution(self._q_grasp)
-            self.apply_ik_solution(self._q_above)
-            
-            if self._pick_timer > 1000:  # ~2 seconds
-                self.get_logger().info('🎉 Pick complete!')
-                self._pick_stage = 'done'
-        
-        # Stage 5: Hold
-        elif self._pick_stage == 'done':
-            self.ctrl_state['grip'] = 0.01  # Closed
-            self.apply_ik_solution(np.array([self._q_above[0],0,0,0,0,self._q_above[5]]))
-        #
-    def get_joint_indices_complete(self):
-        """Get both qpos and nv (dof) indices for each joint."""
-        
-        joint_info = {}
-        
-        self.get_logger().info("\n" + "="*70)
-        self.get_logger().info("JOINT INDEXING (qpos and nv)")
-        self.get_logger().info("="*70)
-        
-        for joint_name in JOINT_NAMES:
-            if joint_name in self.joint_ids:
-                joint_id = self.joint_ids[joint_name]
-                qpos_addr = self.model.jnt_qposadr[joint_id]
-                
-                # nv index (velocity space) - THIS IS WHAT WE NEED FOR JACOBIAN
-                nv_addr = self.model.jnt_dofadr[joint_id]
-                
-                joint_info[joint_name] = {
-                    'joint_id': joint_id,
-                    'qpos_idx': qpos_addr,
-                    'nv_idx': nv_addr
-                }
-                
-                self.get_logger().info(
-                    f"  {joint_name:<20} joint_id={joint_id:<3} "
-                    f"qpos_idx={qpos_addr:<3} nv_idx={nv_addr:<3}"
-                )
-        
-        self.get_logger().info("="*70 + "\n")
-        
-        return joint_info
-    def get_joint_state(self, joint_name):
-
-        if hasattr(self, 'joint_info') and joint_name in self.joint_info:
-            qpos_idx = self.joint_info[joint_name]['qpos_idx']
-            nv_idx = self.joint_info[joint_name]['nv_idx']
-            
-            if 0 <= qpos_idx < len(self.data.qpos) and 0 <= nv_idx < len(self.data.qvel):
-                pos = float(self.data.qpos[qpos_idx])
-                vel = float(self.data.qvel[nv_idx])
-                return (pos, vel)
-            
-    def apply_ik_solution(self, q_sol,pick=False):
-
-        if not hasattr(self, '_motion_stage'):
-            self._motion_stage = 'lift'
-            self._lift_kp = 2.3  # Proportional gain for lift control
-            self.lift_ctr=LiftPID(Kp=150.0, Ki=50.0, Kd=20.0)
-            self.arm_ctr = ArmExtendPID(Kp=200, Ki=5, Kd=10)
-            self.wrist_ctr = WristYawPID(Kp=100.0, Ki=10.0, Kd=8.0)
-        if self._motion_stage == 'lift':
-            current_lift, current_vel = self.get_joint_state('joint_lift')
-            target_lift = q_sol[0]
-            lift_err=target_lift-current_lift
-            dt = float(self.model.opt.timestep)
-            force=self.lift_ctr.compute(z_desired=target_lift, z_current=current_lift, zd_current=current_vel, dt=dt)
-            self.ctrl_state['lift'] =target_lift#np.clip(force,-56,56)
-            self.get_logger().info(
-                f"LIFT: current={current_lift:.3f} → target={target_lift:.3f}, "
-                f"error={lift_err:.3f}"
-            )
-            self.ctrl_state['arm_extend'] = 0.0
-            self.ctrl_state['wrist_yaw'] = 0.0
-            if lift_err < 0.01:
-                self.get_logger().info("✓ Lift complete! Moving to arm/wrist stage")
-                self._motion_stage = 'arm'
-            return
-        
-        if self._motion_stage == 'arm':
-            target_lift = float(q_sol[0])
-            self.ctrl_state['lift'] = target_lift
-            self.ctrl_state['wrist_yaw'] = 0.0
-            current_arm_total = self.data.qpos[10:14]
-            target_arm_total = q_sol[1:5]
-            current_arm_vel = self.data.qvel[9:13]
-            dt = float(self.model.opt.timestep)
-            self.arm_tau = self.arm_ctr.compute(
-                x_desired=target_arm_total,
-                x_current=current_arm_total,
-                xd_current=current_arm_vel,
-                dt=dt
-            )
-            self.ctrl_state['arm_extend'] = sum(target_arm_total)#float(self.arm_tau)
-            arm_error = abs(sum(target_arm_total) - sum(current_arm_total))
-            self.get_logger().info(
-                f"ARM: {sum(current_arm_total):.4f} → {sum(target_arm_total):.4f}, "
-                f"error={arm_error*1000:.1f}mm"
-            )
-            if arm_error < 0.002: 
-                self.get_logger().info("✓ Arm extended! Moving to grasp stage")
-                self._motion_stage = 'wrist'
-            return
-        if self._motion_stage == 'wrist':
-                self.ctrl_state['lift'] =q_sol[0]
-                self.ctrl_state['arm_extend'] = sum(q_sol[1:5])
-                current_wrist, wrist_vel = self.get_joint_state('joint_wrist_yaw')
-                target_wrist = float(q_sol[5])
-                dt = float(self.model.opt.timestep)
-                wrist_tau = self.wrist_ctr.compute(
-                    target=target_wrist,
-                    current=current_wrist,
-                    velocity=wrist_vel,
-                    dt=dt
-                )
-                self.ctrl_state['wrist_yaw'] = target_wrist#float(wrist_tau)
-                wrist_error = abs(target_wrist - current_wrist)
-                self.get_logger().info(
-                    f"WRIST: {np.degrees(current_wrist):.1f}° → {np.degrees(target_wrist):.1f}°, "
-                    f"error={np.degrees(wrist_error):.1f}°, tau={wrist_tau:.2f}N·m"
-                )
-                if wrist_error < 0.005:  # ~3 degrees tolerance
-                    self.get_logger().info("✓ Wrist aligned! Moving to arm stage")
-                    #self._motion_stage = 'grasp'
-                return
-        '''if self._motion_stage == 'grasp':
-            target_lift = float(q_sol[0])
-            self.ctrl_state['lift'] = target_lift
-            target_wrist = float(q_sol[5])
-            self.ctrl_state['wrist_yaw'] = target_wrist
-            self.ctrl_state['arm_extend'] = sum(q_sol[1:5])
-            self.get_logger().info("Grasping fruit...")
-            if pick:
-                self.ctrl_state['grip'] = 0.04
-            else:
-                self.ctrl_state['grip'] = -0.005
-            return'''
-    #
-    #eges
-    '''def _get_joint_state(self, joint_name):
+    def _get_joint_state(self, joint_name):
         """Get position and velocity for a joint."""
         if joint_name in JOINT_QPOS_MAP:
             idx = JOINT_QPOS_MAP[joint_name]
@@ -824,15 +677,15 @@ class StretchSimNode(Node):
             except (AttributeError, IndexError):
                 pass
         
-        return (0.0, 0.0)'''
-    #eges
+        return (0.0, 0.0)
+    
     def publish_joint_states(self):
         """Publish current joint states."""
         msg = JointState()
         msg.header.stamp = self.get_clock().now().to_msg()
         
         for joint_name in JOINT_NAMES:
-            pos, vel = self.get_joint_state(joint_name)
+            pos, vel = self._get_joint_state(joint_name)
             msg.name.append(joint_name)
             msg.position.append(pos)
             msg.velocity.append(vel)

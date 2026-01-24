@@ -62,7 +62,18 @@ class InteractiveController(Node):
     
     def __init__(self, actions_file='actions.yaml'):
         super().__init__('interactive_controller')
+
+    
+        # Storage for computed IK values
+        self._ik_computed_values = {
+            'wrist_yaw': None,
+            'arm_extend': None,
+            'lift': None
+        }
         
+        # Storage for alignment target
+        self._alignment_target = None
+
         self.actions_file = os.path.join(os.path.dirname(__file__), actions_file)
         self.micro_actions = {}
         self.macro_actions = {}
@@ -162,7 +173,10 @@ class InteractiveController(Node):
         self.joint_cmd_pub = self.create_publisher(Float64MultiArray, '/stretch/joint_command', 10)
         self.reset_pub = self.create_publisher(String, '/stretch/reset_arm', 10)
         self.position_pub = self.create_publisher(Float64MultiArray, '/stretch/navigate_to_position', 10)
-    
+        #
+        self.align_target_pub = self.create_publisher(String, '/stretch/align_with_target', 10)
+        self.compute_ik_pub = self.create_publisher(String, '/stretch/compute_ik', 10)
+        #
     def _setup_subscribers(self):
         """Initialize ROS 2 subscribers."""
         self.joint_state_sub = self.create_subscription(
@@ -170,6 +184,9 @@ class InteractiveController(Node):
         )
         self.nav_status_sub = self.create_subscription(
             Bool, '/stretch/navigation_active', self._navigation_status_callback, 10
+        )
+        self.ik_result_sub = self.create_subscription(
+            Float64MultiArray, '/stretch/ik_result', self._ik_result_callback, 10
         )
         self.current_joint_states = {}
         self.navigation_active = False
@@ -422,7 +439,7 @@ class InteractiveController(Node):
             print("Error: 'anchor' parameter required (e.g., go_to_anchor anchor=A)")
             return False
         speed_percent = self._get_speed(params)
-        position_tolerance = params.get('position_tolerance', 0.15)  # Default 0.15 meters
+        position_tolerance = params.get('position_tolerance', 0.05)  # Default 0.15 meters
         self._go_to_anchor(anchor.upper(), speed_percent, position_tolerance)
         return True
     
@@ -474,17 +491,89 @@ class InteractiveController(Node):
         self._reset_arm(speed_percent)
         return True
     
-    def _handle_elevate_arm(self, params):
-        """Handle elevate_arm action."""
-        height_normalized = self._require_param(params, 'height',
-            "'height' parameter required (0-1 range, e.g., elevate_arm height=0.5)")
-        if height_normalized is None:
+
+    #
+    def _handle_align_with_target(self, params):
+        """Handle align_with_target action."""
+        target = params.get('target', '')
+        if not target:
+            print("Error: 'target' parameter required (e.g., align_with_target target=tomato1)")
             return False
-        height = self._normalize_to_range(height_normalized, *self.PARAM_RANGES['lift'])
+            
+        
         speed_percent = self._get_speed(params)
-        self._elevate_arm(height, speed_percent)
+        delta_angle = params.get('delta_angle', 5.0)
+        
+        # Store target name for use by simulation node
+        self._alignment_target = target
+        
+        # Publish alignment request to simulation node
+        self._align_with_target(target, speed_percent, delta_angle)
         return True
     
+    def _handle_compute_ik(self, params):
+        """Handle compute_ik action - requests IK computation from simulation node."""
+        target = params.get('target', '')
+        if not target:
+            print("Error: 'target' parameter required (e.g., compute_ik target=tomato3)")
+            return False
+        
+        speed_percent = self._get_speed(params)
+        
+        # Publish IK computation request to simulation node
+        self._compute_ik(target, speed_percent)
+        return True
+    def _ik_result_callback(self, msg):
+        """Receive and store IK computation results."""
+        if len(msg.data) < 4:
+            return
+        
+        success = msg.data[3] > 0.5
+        
+        if success:
+            # Results are: [lift_raw, arm_raw, wrist_raw, success_flag]
+            # Store RAW values directly (no normalization)
+            self._ik_computed_values['lift'] = float(msg.data[0])
+            self._ik_computed_values['arm_extend'] = float(msg.data[1])
+            self._ik_computed_values['wrist_yaw'] = float(msg.data[2])
+            
+            print(f"  ✓ IK computed: wrist={msg.data[2]:.3f}, arm={msg.data[1]:.3f}, lift={msg.data[0]:.3f}")
+        else:
+            print("  ✗ IK computation failed - target unreachable")
+            # Clear stored values
+            self._ik_computed_values = {'wrist_yaw': None, 'arm_extend': None, 'lift': None}
+    '''def _ik_result_callback(self, msg):
+        """Receive and store IK computation results."""
+        if len(msg.data) < 4:
+            return
+        
+        success = msg.data[3] > 0.5
+        
+        if success:
+            # Results are: [lift_raw, arm_raw, wrist_raw, success_flag]
+            lift_raw = float(msg.data[0])
+            arm_raw = float(msg.data[1])
+            wrist_raw = float(msg.data[2])
+            
+            # Normalize to 0-1 range for our parameter system
+            lift_norm = (lift_raw - self.PARAM_RANGES['lift'][0]) / \
+                        (self.PARAM_RANGES['lift'][1] - self.PARAM_RANGES['lift'][0])
+            arm_norm = (arm_raw - self.PARAM_RANGES['arm_extend'][0]) / \
+                    (self.PARAM_RANGES['arm_extend'][1] - self.PARAM_RANGES['arm_extend'][0])
+            wrist_norm = (wrist_raw - self.PARAM_RANGES['wrist_yaw'][0]) / \
+                        (self.PARAM_RANGES['wrist_yaw'][1] - self.PARAM_RANGES['wrist_yaw'][0])
+            
+            # Clamp to 0-1
+            self._ik_computed_values['lift'] = max(0.0, min(1.0, lift_norm))
+            self._ik_computed_values['arm_extend'] = max(0.0, min(1.0, arm_norm))
+            self._ik_computed_values['wrist_yaw'] = max(0.0, min(1.0, wrist_norm))
+            
+            print(f"  ✓ IK computed: wrist={wrist_norm:.3f}, arm={arm_norm:.3f}, lift={lift_norm:.3f}")
+        else:
+            print("  ✗ IK computation failed - target unreachable")
+            # Clear stored values
+            self._ik_computed_values = {'wrist_yaw': None, 'arm_extend': None, 'lift': None}
+    #
     def _handle_extend_arm(self, params):
         """Handle extend_arm action."""
         length_normalized = self._require_param(params, 'length',
@@ -506,7 +595,104 @@ class InteractiveController(Node):
         speed_percent = self._get_speed(params)
         self._rotate_wrist(angle, speed_percent)
         return True
-    
+    def _handle_elevate_arm(self, params):
+        """Handle elevate_arm action."""
+        height_normalized = self._require_param(params, 'height',
+            "'height' parameter required (0-1 range, e.g., elevate_arm height=0.5)")
+        if height_normalized is None:
+            return False
+        height = self._normalize_to_range(height_normalized, *self.PARAM_RANGES['lift'])
+        speed_percent = self._get_speed(params)
+        self._elevate_arm(height, speed_percent)
+        return True
+    def _handle_extend_arm(self, params):
+        """Handle extend_arm action - supports both manual and IK-computed values."""
+        
+        use_ik = params.get('use_ik', 0)
+        
+        if use_ik:
+            if self._ik_computed_values['arm_extend'] is None:
+                print("Error: No IK arm value available. Call compute_ik first.")
+                return False
+            
+            length_normalized = self._ik_computed_values['arm_extend']
+            print(f"  → Using IK arm value: {length_normalized:.3f}")
+        else:
+            length_normalized = self._require_param(params, 'length',
+                "'length' parameter required (0-1 range, e.g., extend_arm length=0.5)")
+            if length_normalized is None:
+                return False
+        
+        length = self._normalize_to_range(length_normalized, *self.PARAM_RANGES['arm_extend'])
+        speed_percent = self._get_speed(params)
+        self._extend_arm(length, speed_percent)
+        return True'''
+    def _handle_extend_arm(self, params):
+        """Handle extend_arm action - supports both manual and IK-computed values."""
+        
+        use_ik = params.get('use_ik', 0)
+        
+        if use_ik:
+            if self._ik_computed_values['arm_extend'] is None:
+                print("Error: No IK arm value available. Call compute_ik first.")
+                return False
+            
+            length = self._ik_computed_values['arm_extend']  # Already in meters - use directly
+            print(f"  → Using IK arm value: {length:.3f}m")
+        else:
+            length_normalized = self._require_param(params, 'length',
+                "'length' parameter required (0-1 range, e.g., extend_arm length=0.5)")
+            if length_normalized is None:
+                return False
+            length = self._normalize_to_range(length_normalized, *self.PARAM_RANGES['arm_extend'])
+        
+        speed_percent = self._get_speed(params)
+        self._extend_arm(length, speed_percent)
+        return True
+    def _handle_rotate_wrist(self, params):
+        """Handle rotate_wrist action - supports both manual and IK-computed values."""
+        
+        use_ik = params.get('use_ik', 0)
+        
+        if use_ik:
+            if self._ik_computed_values['wrist_yaw'] is None:
+                print("Error: No IK wrist value available. Call compute_ik first.")
+                return False
+            
+            angle = self._ik_computed_values['wrist_yaw']  # Already in radians - use directly
+            print(f"  → Using IK wrist value: {angle:.3f} rad")
+        else:
+            angle_normalized = self._require_param(params, 'angle',
+                "'angle' parameter required (0-1 range, e.g., rotate_wrist angle=0.5)")
+            if angle_normalized is None:
+                return False
+            angle = self._normalize_to_range(angle_normalized, *self.PARAM_RANGES['wrist_yaw'])
+        
+        speed_percent = self._get_speed(params)
+        self._rotate_wrist(angle, speed_percent)
+        return True
+    def _handle_elevate_arm(self, params):
+        """Handle elevate_arm action - supports both manual and IK-computed values."""
+        
+        use_ik = params.get('use_ik', 0)
+        
+        if use_ik:
+            if self._ik_computed_values['lift'] is None:
+                print("Error: No IK lift value available. Call compute_ik first.")
+                return False
+            
+            height = self._ik_computed_values['lift']  # Already in meters - use directly
+            print(f"  → Using IK lift value: {height:.3f}m")
+        else:
+            height_normalized = self._require_param(params, 'height',
+                "'height' parameter required (0-1 range, e.g., elevate_arm height=0.5)")
+            if height_normalized is None:
+                return False
+            height = self._normalize_to_range(height_normalized, *self.PARAM_RANGES['lift'])
+        
+        speed_percent = self._get_speed(params)
+        self._elevate_arm(height, speed_percent)
+        return True
     def _handle_open_gripper(self, params):
         """Handle open_gripper action."""
         speed_percent = self._get_speed(params)
@@ -547,6 +733,9 @@ class InteractiveController(Node):
         'go_to_anchor': '_handle_go_to_anchor',
         'turn_towards': '_handle_turn_towards',
         'go_to_position': '_handle_go_to_position',
+        #
+        'align_with_target': '_handle_align_with_target',
+        #
     }
     
     ARM_HANDLERS = {
@@ -562,6 +751,7 @@ class InteractiveController(Node):
     UTILITY_HANDLERS = {
         'wait': '_handle_wait',
         'wait_for_arm': '_handle_wait_for_arm',
+        'compute_ik': '_handle_compute_ik',
     }
     
     def _execute_micro_action(self, action_name, params):
@@ -737,7 +927,51 @@ class InteractiveController(Node):
         self.joint_state['gripper'] = width
         self._publish_single_joint_command('gripper', width, speed_percent)
         print(f"→ Setting gripper to width {width:.3f}{self._format_speed_str(speed_percent)}")
-    
+    #
+    def _align_with_target(self, target_name, speed_percent=DEFAULT_SPEED, delta_angle=5.0):
+        """Request robot to align with target object."""
+        msg = String()
+        msg.data = f"{target_name}:{delta_angle:.1f}"
+        self.align_target_pub.publish(msg)
+        
+        delta_str = f", delta_angle={delta_angle:.1f}°" if abs(delta_angle - 5.0) > 0.01 else ""
+        print(f"→ Aligning with target '{target_name}'{self._format_speed_str(speed_percent)}{delta_str}")
+        self._wait_for_navigation(timeout=self.NAV_TIMEOUT)
+    def _compute_ik(self, target_name, speed_percent=DEFAULT_SPEED):
+        """Request IK computation for target object."""
+        # Clear previous IK values
+        self._ik_computed_values = {
+            'wrist_yaw': None,
+            'arm_extend': None,
+            'lift': None
+        }
+        
+        # Publish IK request
+        msg = String()
+        msg.data = target_name
+        self.compute_ik_pub.publish(msg)
+        
+        print(f"→ Computing IK for target '{target_name}'...")
+        
+        # Wait for IK result with timeout
+        start_time = time.time()
+        timeout = 5.0  # 5 second timeout
+        
+        while time.time() - start_time < timeout:
+            # Spin to process incoming messages
+            rclpy.spin_once(self, timeout_sec=0.1)
+            
+            # Check if IK result arrived
+            if self._ik_computed_values['wrist_yaw'] is not None:
+                print(f"  ✓ IK received and stored")
+                return True
+            
+            time.sleep(0.1)
+        
+        # Timeout - IK never arrived
+        print(f"  ⚠ IK computation timeout after {timeout}s")
+        return False
+    #
     def _wait(self, duration):
         """Wait for specified duration."""
         print(f"→ Waiting {duration} seconds...")

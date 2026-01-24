@@ -32,7 +32,7 @@ class NavigationController:
         self._turn_only_start_time = None
         self._navigation_start_time = None
     
-    def set_target(self, target_pos, target_direction=None, position_tolerance=0.3, direction_tolerance=None):
+    def set_target(self, target_pos, target_direction=None, position_tolerance=0.05, direction_tolerance=None):
         """
         Set target position and optional direction.
         
