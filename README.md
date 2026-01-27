@@ -87,7 +87,7 @@ stretch> turn_towards anchor=ORIGIN  # Turn towards center
 - `go_to_anchor anchor=<A-F|ORIGIN> [speed=0.5]` - Navigate to anchor
 - `turn_towards anchor=<A-F|ORIGIN> [speed=0.5]` - Turn towards anchor
 - `go_to_position x=<0-1> y=<0-1> [direction=<0-1>] [speed=0.5]` - Navigate to position
-
+- `align_with_target` - Turn towards the veggie (facing veggie so that ik can be implemented once base is fixed)
 ### Arm Control
 - `reset_arm [speed=0.5]` - Reset arm to default position
 - `elevate_arm height=<0-1> [speed=0.5]` - Set lift height
@@ -100,6 +100,7 @@ stretch> turn_towards anchor=ORIGIN  # Turn towards center
 ### Utility
 - `wait duration=<seconds>` - Wait for duration
 - `wait_for_arm [timeout=<seconds>]` - Wait until arm reaches target
+- `compute_ik` - compute inverse kinematics
 
 ## Anchors
 
@@ -118,7 +119,9 @@ Stretch2_SimulationEnv/
 ├── interactive_controller.py     # Interactive command-line controller
 ├── stretch_keyboard_controller.py # Keyboard controller
 ├── navigation.py                 # Navigation controller
+├── ik.py                         # Damped Pseudo jacobian inverse kinematics and alignment with target algorithm
 └── assets/                       # 3D models and textures
+
 ```
 
 ## ROS 2 Topics
@@ -157,9 +160,5 @@ Stretch2_SimulationEnv/
 
 
 
-## For ege
 
-1.run the ./run_ros2_sim.sh
-2.ros2 topic pub --once /stretch/macro_action std_msgs/String "data: 'tomato2'"
-3.modify tomato1,2,3 as per.
 
