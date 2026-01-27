@@ -128,15 +128,6 @@
 	  <site name="lettuce3_site" pos="0.01 -0.03 -0.016" size="0.01" rgba="1 0 0 1"/>
     </body>
 
-
-
-
-
-
-
-
-
-
     <!-- Knife in the middle of table 1 -->
     <body name="knife1" pos="0 0 0.65">
       <joint type="free" damping="0.01"/>
@@ -174,11 +165,6 @@
       <geom name="onion3_collision_1" type="mesh" mesh="onion_convex_1" material="onion_mat" mass="0.065" friction="2.0 1.0 1.0" solref="0.01 1.0" solimp="0.99 0.99 0.001"/>
       <site name="onion3_site" pos="-0.015 0.02 -0.02" size="0.01" rgba="1 0 0 1"/>
     </body>
-
-
-
-
-
 
     <!-- Tomato cluster (right side of table 2) - rotated 90 degrees around Z-axis -->
     <!-- Using convex decomposition: visual mesh + collision geoms for each convex hull -->

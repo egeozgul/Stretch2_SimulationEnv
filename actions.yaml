@@ -156,7 +156,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 1.0
       
       # Align with target
       - action: "align_with_target"
@@ -167,7 +167,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 1.0
       
       # Compute IK
       - action: "compute_ik"
@@ -187,7 +187,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 2.0
       
       - action: "extend_arm"
         parameters:
@@ -196,7 +196,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 3.0
       
       - action: "elevate_arm"
         parameters:
@@ -205,7 +205,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 4.0
       
       # Open gripper
       - action: "set_gripper"
@@ -215,7 +215,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 1.0
+          duration: 2.0
       
       # Close gripper to grasp
       - action: "set_gripper"
@@ -225,7 +225,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 1.0
+          duration: 2.0
       
       # Lift up (manual height, not IK)
       - action: "elevate_arm"
@@ -235,7 +235,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 0.1
+          duration: 1.0
   - name: "get_tomato2"
     description: "Navigate to tomato location and pick it up using IK"
     sequence:
@@ -259,7 +259,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 1.0
       
       # Align with target
       - action: "align_with_target"
@@ -270,7 +270,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 1.0
       
       # Compute IK
       - action: "compute_ik"
@@ -290,7 +290,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 2.0
       
       - action: "extend_arm"
         parameters:
@@ -299,7 +299,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 3.0
       
       - action: "elevate_arm"
         parameters:
@@ -308,7 +308,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 4.0
       
       # Open gripper
       - action: "set_gripper"
@@ -318,7 +318,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 1.0
+          duration: 2.0
       
       # Close gripper to grasp
       - action: "set_gripper"
@@ -328,7 +328,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 1.0
+          duration: 2.0
       
       # Lift up (manual height, not IK)
       - action: "elevate_arm"
@@ -338,7 +338,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 0.1
+          duration: 1.0
   - name: "get_tomato3"
     description: "Navigate to tomato location and pick it up using IK"
     sequence:
@@ -362,7 +362,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 1.0
       
       # Align with target
       - action: "align_with_target"
@@ -373,7 +373,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 1.0
       
       # Compute IK
       - action: "compute_ik"
@@ -393,7 +393,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 2.0
       
       - action: "extend_arm"
         parameters:
@@ -402,7 +402,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 3.0
       
       - action: "elevate_arm"
         parameters:
@@ -411,7 +411,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 4.0
       
       # Open gripper
       - action: "set_gripper"
@@ -421,7 +421,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 1.0
+          duration: 2.0
       
       # Close gripper to grasp
       - action: "set_gripper"
@@ -431,7 +431,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 1.0
+          duration: 2.0
       
       # Lift up (manual height, not IK)
       - action: "elevate_arm"
@@ -441,340 +441,342 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 0.1
-
-  - name: "get_lettuce1"
-    description: "Navigate to lettuce location and pick it up"
-    sequence:
-      - action: "reset_arm"
-        parameters:
-          speed: 0.01
-      #- action: "turn_towards"
-      #  parameters:
-      #    anchor: "ORIGIN"
-      #    speed: 0.5
-      #- action: "go_to_anchor"
-      #  parameters:
-      #    anchor: "anchor_ORIGIN"
-      #    speed: 0.9
-      - action: "wait"
-        parameters:
-          duration: 5.0
-      - action: "go_to_anchor"
-        parameters:
-          anchor: "A"
-          speed: 0.9
-      # TODO: Define sequence of actions
-      # Lettuce is on table 1, left side
-      - action: "wait"
-        parameters:
-          duration: 5.0
-
-      
-      # Align with target
-      - action: "align_with_target"
-        parameters:
-          target: "lettuce1"
-          speed: 0.5
-          delta_angle: 3.0
-      
-      - action: "wait"
-        parameters:
-          duration: 5.0
-      
-      # Compute IK
-      - action: "compute_ik"
-        parameters:
-          target: "lettuce1"
-          speed: 0.5
-      
-      - action: "wait"
-        parameters:
           duration: 1.0
-      
-      # Use IK values - REMOVE manual values, ADD use_ik: 1
-      - action: "rotate_wrist"
-        parameters:
-          use_ik: 1      # ← USE IK VALUE
-          speed: 0.02
-      
-      - action: "wait"
-        parameters:
-          duration: 5.0
-      
-      - action: "extend_arm"
-        parameters:
-          use_ik: 1      # ← USE IK VALUE
-          speed: 0.01
-      
-      - action: "wait"
-        parameters:
-          duration: 5.0
-      
-      - action: "elevate_arm"
-        parameters:
-          use_ik: 1      # ← USE IK VALUE
-          speed: 0.01
-      
-      - action: "wait"
-        parameters:
-          duration: 5.0
-      
-      # Open gripper
-      - action: "set_gripper"
-        parameters:
-          width: 0.9
-          speed: 0.01
-      
-      - action: "wait"
-        parameters:
-          duration: 5.0
-      
-      # Close gripper to grasp
-      - action: "set_gripper"
-        parameters:
-          width: 0.0
-          speed: 0.01
-      
-      - action: "wait"
-        parameters:
-          duration: 5.0
-      
-      # Lift up (manual height, not IK)
-      - action: "elevate_arm"
-        parameters:
-          height: 0.8    # Manual 0-1 value (not IK)
-          speed: 0.01
-      
-      - action: "wait"
-        parameters:
-          duration: 0.1
-  - name: "get_lettuce2"
-    description: "Navigate to lettuce location and pick it up"
-    sequence:
-      - action: "reset_arm"
-        parameters:
-          speed: 0.01
-      - action: "turn_towards"
-        parameters:
-          anchor: "ORIGIN"
-          speed: 0.5
-      - action: "wait"
-        parameters:
-          duration: 10
-      - action: "go_to_anchor"
-        parameters:
-          anchor: "A"
-          speed: 0.9
-      # TODO: Define sequence of actions
-      # Lettuce is on table 1, left side
-      - action: "wait"
-        parameters:
-          duration: 5.0
-
-      
-      # Align with target
-      - action: "align_with_target"
-        parameters:
-          target: "lettuce2"
-          speed: 0.5
-          delta_angle: 1.0
-      
-      - action: "wait"
-        parameters:
-          duration: 5.0
-      
-      # Compute IK
-      - action: "compute_ik"
-        parameters:
-          target: "lettuce2"
-          speed: 0.5
-      
-      - action: "wait"
-        parameters:
-          duration: 1.0
-      
-      # Use IK values - REMOVE manual values, ADD use_ik: 1
-      - action: "rotate_wrist"
-        parameters:
-          use_ik: 1      # ← USE IK VALUE
-          speed: 0.02
-      
-      - action: "wait"
-        parameters:
-          duration: 5.0
-      
-      - action: "extend_arm"
-        parameters:
-          use_ik: 1      # ← USE IK VALUE
-          speed: 0.01
-      
-      - action: "wait"
-        parameters:
-          duration: 5.0
-      
-      - action: "elevate_arm"
-        parameters:
-          use_ik: 1      # ← USE IK VALUE
-          speed: 0.01
-      
-      - action: "wait"
-        parameters:
-          duration: 5.0
-      
-      # Open gripper
-      - action: "set_gripper"
-        parameters:
-          width: 0.9
-          speed: 0.01
-      
-      - action: "wait"
-        parameters:
-          duration: 1.0
-      
-      # Close gripper to grasp
-      - action: "set_gripper"
-        parameters:
-          width: 0.0
-          speed: 0.01
-      
-      - action: "wait"
-        parameters:
-          duration: 1.0
-      
-      # Lift up (manual height, not IK)
-      - action: "elevate_arm"
-        parameters:
-          height: 0.8    # Manual 0-1 value (not IK)
-          speed: 0.01
-      
-      - action: "wait"
-        parameters:
-          duration: 0.1
-  - name: "get_lettuce3"
-    description: "Navigate to lettuce location and pick it up"
-    sequence:
-      - action: "reset_arm"
-        parameters:
-          speed: 0.01
-      - action: "turn_towards"
-        parameters:
-          anchor: "ORIGIN"
-          speed: 0.5
-      - action: "wait"
-        parameters:
-          duration: 10
-      - action: "go_to_anchor"
-        parameters:
-          anchor: "A"
-          speed: 0.9
-      # TODO: Define sequence of actions
-      # Lettuce is on table 1, left side
-      - action: "wait"
-        parameters:
-          duration: 5.0
-
-      
-      # Align with target
-      - action: "align_with_target"
-        parameters:
-          target: "lettuce3"
-          speed: 0.5
-          delta_angle: 1.0
-      
-      - action: "wait"
-        parameters:
-          duration: 5.0
-      
-      # Compute IK
-      - action: "compute_ik"
-        parameters:
-          target: "lettuce3"
-          speed: 0.5
-      
-      - action: "wait"
-        parameters:
-          duration: 1.0
-      
-      # Use IK values - REMOVE manual values, ADD use_ik: 1
-      - action: "rotate_wrist"
-        parameters:
-          use_ik: 1      # ← USE IK VALUE
-          speed: 0.02
-      
-      - action: "wait"
-        parameters:
-          duration: 5.0
-      
-      - action: "extend_arm"
-        parameters:
-          use_ik: 1      # ← USE IK VALUE
-          speed: 0.01
-      
-      - action: "wait"
-        parameters:
-          duration: 5.0
-      
-      - action: "elevate_arm"
-        parameters:
-          use_ik: 1      # ← USE IK VALUE
-          speed: 0.01
-      
-      - action: "wait"
-        parameters:
-          duration: 5.0
-      
-      # Open gripper
-      - action: "set_gripper"
-        parameters:
-          width: 0.9
-          speed: 0.01
-      
-      - action: "wait"
-        parameters:
-          duration: 1.0
-      
-      # Close gripper to grasp
-      - action: "set_gripper"
-        parameters:
-          width: 0.0
-          speed: 0.01
-      
-      - action: "wait"
-        parameters:
-          duration: 1.0
-      
-      # Lift up (manual height, not IK)
-      - action: "elevate_arm"
-        parameters:
-          height: 0.8    # Manual 0-1 value (not IK)
-          speed: 0.01
-      
-      - action: "wait"
-        parameters:
-          duration: 0.1
   
+  - name: "get_lettuce1"
+    description: "Navigate to tomato location and pick it up using IK"
+    sequence:
+      - action: "reset_arm"
+        parameters:
+          speed: 0.5
+      
+      - action: "turn_towards"
+        parameters:
+          anchor: "ORIGIN"
+          speed: 0.5
+      
+      - action: "wait"
+        parameters:
+          duration: 0.5
+      
+      - action: "go_to_anchor"
+        parameters:
+          anchor: "A"
+          speed: 0.9
+      
+      - action: "wait"
+        parameters:
+          duration: 1.0
+      
+      # Align with target
+      - action: "align_with_target"
+        parameters:
+          target: "lettuce1"
+          speed: 0.5
+          delta_angle: 1.0
+      
+      - action: "wait"
+        parameters:
+          duration: 1.0
+      
+      # Compute IK
+      - action: "compute_ik"
+        parameters:
+          target: "lettuce1"
+          speed: 0.5
+      
+      - action: "wait"
+        parameters:
+          duration: 1.0
+      
+      # Use IK values - REMOVE manual values, ADD use_ik: 1
+      - action: "rotate_wrist"
+        parameters:
+          use_ik: 1      # ← USE IK VALUE
+          speed: 0.02
+      
+      - action: "wait"
+        parameters:
+          duration: 2.0
+      
+      - action: "extend_arm"
+        parameters:
+          use_ik: 1      # ← USE IK VALUE
+          speed: 0.01
+      
+      - action: "wait"
+        parameters:
+          duration: 3.0
+      
+      - action: "elevate_arm"
+        parameters:
+          use_ik: 1      # ← USE IK VALUE
+          speed: 0.01
+      
+      - action: "wait"
+        parameters:
+          duration: 4.0
+      
+      # Open gripper
+      - action: "set_gripper"
+        parameters:
+          width: 0.9
+          speed: 0.01
+      
+      - action: "wait"
+        parameters:
+          duration: 2.0
+      
+      # Close gripper to grasp
+      - action: "set_gripper"
+        parameters:
+          width: 0.0
+          speed: 0.01
+      
+      - action: "wait"
+        parameters:
+          duration: 2.0
+      
+      # Lift up (manual height, not IK)
+      - action: "elevate_arm"
+        parameters:
+          height: 0.8    # Manual 0-1 value (not IK)
+          speed: 0.01
+      
+      - action: "wait"
+        parameters:
+          duration: 1.0
+  - name: "get_lettuce2"
+    description: "Navigate to tomato location and pick it up using IK"
+    sequence:
+      - action: "reset_arm"
+        parameters:
+          speed: 0.5
+      
+      - action: "turn_towards"
+        parameters:
+          anchor: "ORIGIN"
+          speed: 0.5
+      
+      - action: "wait"
+        parameters:
+          duration: 0.5
+      
+      - action: "go_to_anchor"
+        parameters:
+          anchor: "A"
+          speed: 0.9
+      
+      - action: "wait"
+        parameters:
+          duration: 1.0
+      
+      # Align with target
+      - action: "align_with_target"
+        parameters:
+          target: "lettuce2"
+          speed: 0.5
+          delta_angle: 1.0
+      
+      - action: "wait"
+        parameters:
+          duration: 1.0
+      
+      # Compute IK
+      - action: "compute_ik"
+        parameters:
+          target: "lettuce2"
+          speed: 0.5
+      
+      - action: "wait"
+        parameters:
+          duration: 1.0
+      
+      # Use IK values - REMOVE manual values, ADD use_ik: 1
+      - action: "rotate_wrist"
+        parameters:
+          use_ik: 1      # ← USE IK VALUE
+          speed: 0.02
+      
+      - action: "wait"
+        parameters:
+          duration: 2.0
+      
+      - action: "extend_arm"
+        parameters:
+          use_ik: 1      # ← USE IK VALUE
+          speed: 0.01
+      
+      - action: "wait"
+        parameters:
+          duration: 3.0
+      
+      - action: "elevate_arm"
+        parameters:
+          use_ik: 1      # ← USE IK VALUE
+          speed: 0.01
+      
+      - action: "wait"
+        parameters:
+          duration: 4.0
+      
+      # Open gripper
+      - action: "set_gripper"
+        parameters:
+          width: 0.9
+          speed: 0.01
+      
+      - action: "wait"
+        parameters:
+          duration: 2.0
+      
+      # Close gripper to grasp
+      - action: "set_gripper"
+        parameters:
+          width: 0.0
+          speed: 0.01
+      
+      - action: "wait"
+        parameters:
+          duration: 2.0
+      
+      # Lift up (manual height, not IK)
+      - action: "elevate_arm"
+        parameters:
+          height: 0.8    # Manual 0-1 value (not IK)
+          speed: 0.01
+      
+      - action: "wait"
+        parameters:
+          duration: 1.0
+  - name: "get_lettuce3"
+    description: "Navigate to tomato location and pick it up using IK"
+    sequence:
+      - action: "reset_arm"
+        parameters:
+          speed: 0.5
+      
+      - action: "turn_towards"
+        parameters:
+          anchor: "ORIGIN"
+          speed: 0.5
+      
+      - action: "wait"
+        parameters:
+          duration: 0.5
+      
+      - action: "go_to_anchor"
+        parameters:
+          anchor: "A"
+          speed: 0.9
+      
+      - action: "wait"
+        parameters:
+          duration: 1.0
+      
+      # Align with target
+      - action: "align_with_target"
+        parameters:
+          target: "lettuce3"
+          speed: 0.5
+          delta_angle: 1.0
+      
+      - action: "wait"
+        parameters:
+          duration: 1.0
+      
+      # Compute IK
+      - action: "compute_ik"
+        parameters:
+          target: "lettuce3"
+          speed: 0.5
+      
+      - action: "wait"
+        parameters:
+          duration: 1.0
+      
+      # Use IK values - REMOVE manual values, ADD use_ik: 1
+      - action: "rotate_wrist"
+        parameters:
+          use_ik: 1      # ← USE IK VALUE
+          speed: 0.02
+      
+      - action: "wait"
+        parameters:
+          duration: 2.0
+      
+      - action: "extend_arm"
+        parameters:
+          use_ik: 1      # ← USE IK VALUE
+          speed: 0.01
+      
+      - action: "wait"
+        parameters:
+          duration: 3.0
+      
+      - action: "elevate_arm"
+        parameters:
+          use_ik: 1      # ← USE IK VALUE
+          speed: 0.01
+      
+      - action: "wait"
+        parameters:
+          duration: 4.0
+      
+      # Open gripper
+      - action: "set_gripper"
+        parameters:
+          width: 0.9
+          speed: 0.01
+      
+      - action: "wait"
+        parameters:
+          duration: 2.0
+      
+      # Close gripper to grasp
+      - action: "set_gripper"
+        parameters:
+          width: 0.0
+          speed: 0.01
+      
+      - action: "wait"
+        parameters:
+          duration: 2.0
+      
+      # Lift up (manual height, not IK)
+      - action: "elevate_arm"
+        parameters:
+          height: 0.8    # Manual 0-1 value (not IK)
+          speed: 0.01
+      
+      - action: "wait"
+        parameters:
+          duration: 1.0
+
   - name: "get_onion1"
-    description: "Navigate to onion location and pick it up"
+    description: "Navigate to tomato location and pick it up using IK"
     sequence:
       - action: "reset_arm"
         parameters:
-          speed: 0.01
+          speed: 0.5
+      
       - action: "turn_towards"
         parameters:
           anchor: "ORIGIN"
           speed: 0.5
+      
       - action: "wait"
         parameters:
-          duration: 10
+          duration: 0.5
+      
       - action: "go_to_anchor"
         parameters:
           anchor: "C"
           speed: 0.9
+      
       - action: "wait"
         parameters:
-          duration: 5.0
-
+          duration: 1.0
       
       # Align with target
       - action: "align_with_target"
@@ -785,7 +787,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 1.0
       
       # Compute IK
       - action: "compute_ik"
@@ -805,7 +807,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 2.0
       
       - action: "extend_arm"
         parameters:
@@ -814,7 +816,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 3.0
       
       - action: "elevate_arm"
         parameters:
@@ -823,7 +825,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 4.0
       
       # Open gripper
       - action: "set_gripper"
@@ -833,7 +835,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 1.0
+          duration: 2.0
       
       # Close gripper to grasp
       - action: "set_gripper"
@@ -843,7 +845,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 1.0
+          duration: 2.0
       
       # Lift up (manual height, not IK)
       - action: "elevate_arm"
@@ -853,28 +855,31 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 0.1
+          duration: 1.0
   - name: "get_onion2"
-    description: "Navigate to onion location and pick it up"
+    description: "Navigate to tomato location and pick it up using IK"
     sequence:
       - action: "reset_arm"
         parameters:
-          speed: 0.01
+          speed: 0.5
+      
       - action: "turn_towards"
         parameters:
           anchor: "ORIGIN"
           speed: 0.5
+      
       - action: "wait"
         parameters:
-          duration: 10
+          duration: 0.5
+      
       - action: "go_to_anchor"
         parameters:
           anchor: "C"
           speed: 0.9
+      
       - action: "wait"
         parameters:
-          duration: 5.0
-
+          duration: 1.0
       
       # Align with target
       - action: "align_with_target"
@@ -885,7 +890,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 1.0
       
       # Compute IK
       - action: "compute_ik"
@@ -905,7 +910,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 2.0
       
       - action: "extend_arm"
         parameters:
@@ -914,7 +919,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 3.0
       
       - action: "elevate_arm"
         parameters:
@@ -923,7 +928,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 4.0
       
       # Open gripper
       - action: "set_gripper"
@@ -933,7 +938,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 1.0
+          duration: 2.0
       
       # Close gripper to grasp
       - action: "set_gripper"
@@ -943,7 +948,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 1.0
+          duration: 2.0
       
       # Lift up (manual height, not IK)
       - action: "elevate_arm"
@@ -953,28 +958,31 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 0.1
+          duration: 1.0
   - name: "get_onion3"
-    description: "Navigate to onion location and pick it up"
+    description: "Navigate to tomato location and pick it up using IK"
     sequence:
       - action: "reset_arm"
         parameters:
-          speed: 0.01
+          speed: 0.5
+      
       - action: "turn_towards"
         parameters:
           anchor: "ORIGIN"
           speed: 0.5
+      
       - action: "wait"
         parameters:
-          duration: 10
+          duration: 0.5
+      
       - action: "go_to_anchor"
         parameters:
           anchor: "C"
           speed: 0.9
+      
       - action: "wait"
         parameters:
-          duration: 5.0
-
+          duration: 1.0
       
       # Align with target
       - action: "align_with_target"
@@ -985,7 +993,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 1.0
       
       # Compute IK
       - action: "compute_ik"
@@ -1005,7 +1013,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 2.0
       
       - action: "extend_arm"
         parameters:
@@ -1014,7 +1022,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 3.0
       
       - action: "elevate_arm"
         parameters:
@@ -1023,7 +1031,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 4.0
       
       # Open gripper
       - action: "set_gripper"
@@ -1033,7 +1041,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 1.0
+          duration: 2.0
       
       # Close gripper to grasp
       - action: "set_gripper"
@@ -1043,7 +1051,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 1.0
+          duration: 2.0
       
       # Lift up (manual height, not IK)
       - action: "elevate_arm"
@@ -1053,7 +1061,8 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 0.1
+          duration: 1.0
+
   - name: "cut_fruit"
     description: "Cut fruit already in gripper at knife location (table 1, middle)"
     sequence:
@@ -1074,7 +1083,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 1.0
       
       # Step 2: Align with knife target
       - action: "align_with_target"
@@ -1085,7 +1094,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 1.0
       
       # Step 3: Compute IK for cutting position
       - action: "compute_ik"
@@ -1105,7 +1114,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 2.0
       
       - action: "extend_arm"
         parameters:
@@ -1114,7 +1123,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 3.0
       
       - action: "elevate_arm"
         parameters:
@@ -1123,16 +1132,16 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 4.0
       
-      # Step 5: Open gripper to release fruit onto knife
-      - action: "open_gripper"
+      - action: "set_gripper"
         parameters:
+          width: 0.9
           speed: 0.01
       
       - action: "wait"
         parameters:
-          duration: 1.0
+          duration: 2.0
       
       # Step 6: Lift up to clear the cutting area
       - action: "elevate_arm"
@@ -1142,18 +1151,26 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 2.0
       
       # Step 7: Close gripper (ready for next action)
-      - action: "close_gripper"
+      - action: "set_gripper"
         parameters:
+          width: 0.0
           speed: 0.01
-      - action: "reset_arm"  # ← Add this
-        parameters:
-          speed: 0.5
+
       - action: "wait"
         parameters:
-          duration: 0.1
+          duration: 1.0
+
+      - action: "reset_arm"  
+        parameters:
+          speed: 0.5
+
+      - action: "wait"
+        parameters:
+          duration: 1.0
+
   - name: "plate_fruit"
     description: "Cut fruit already in gripper at knife location (table 1, middle)"
     sequence:
@@ -1174,7 +1191,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 1.0
       
       # Step 2: Align with knife target
       - action: "align_with_target"
@@ -1185,7 +1202,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 1.0
       
       # Step 3: Compute IK for cutting position
       - action: "compute_ik"
@@ -1205,7 +1222,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 2.0
       
       - action: "extend_arm"
         parameters:
@@ -1214,7 +1231,7 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 3.0
       
       - action: "elevate_arm"
         parameters:
@@ -1223,16 +1240,17 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 4.0
       
       # Step 5: Open gripper to release fruit onto knife
-      - action: "open_gripper"
+      - action: "set_gripper"
         parameters:
+          width: 0.9
           speed: 0.01
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 2.0
       
       # Step 6: Lift up to clear the cutting area
       - action: "elevate_arm"
@@ -1242,18 +1260,25 @@ macro_actions:
       
       - action: "wait"
         parameters:
-          duration: 5.0
+          duration: 4.0
       
-      # Step 7: Close gripper (ready for next action)
-      - action: "close_gripper"
+      - action: "set_gripper"
         parameters:
+          width: 0.0
           speed: 0.01
+
+      - action: "wait"
+        parameters:
+          duration: 1.0
+
       - action: "reset_arm"  # ← Add this
         parameters:
           speed: 0.5
+
       - action: "wait"
         parameters:
-          duration: 0.1
+          duration: 1.0
+          
   - name: "get_plate"
     description: "Navigate to plate location and pick it up"
     sequence:
