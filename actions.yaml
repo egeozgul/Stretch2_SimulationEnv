@@ -86,18 +86,6 @@ micro_actions:
       angle: "float"  # Angle 0-1 (0=min, 0.5=middle, 1=max)
       speed: "float"  # Optional: Speed 0-1 (default: 0.5). 0=min, 0.5=middle, 1=max
     
-  - name: "open_gripper"
-    type: "arm_control"
-    description: "Open gripper fully (Usage: open_gripper speed=0.5)"
-    parameters:
-      speed: "float"  # Optional: Speed 0-1 (default: 0.5). 0=min, 0.5=middle, 1=max
-    
-  - name: "close_gripper"
-    type: "arm_control"
-    description: "Close gripper fully (Usage: close_gripper speed=0.5)"
-    parameters:
-      speed: "float"  # Optional: Speed 0-1 (default: 0.5). 0=min, 0.5=middle, 1=max
-    
   - name: "set_gripper"
     type: "arm_control"
     description: "Set gripper to a specific opening width (Usage: set_gripper width=0.5 speed=0.5)"
